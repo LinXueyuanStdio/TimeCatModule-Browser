@@ -1,7 +1,7 @@
 include ':app'
-include ':module-git'
+include ':module-browser'
 
-rootProject.name = "TimeCatModuleTemplate"
+rootProject.name = "TimeCatModule-Browser"
 
 // 引入composing的设置
 apply from: "gradle/composingConfig.gradle"

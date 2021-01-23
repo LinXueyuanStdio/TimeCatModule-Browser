@@ -1,0 +1,134 @@
+apply from: "${project.rootDir}/gradle/library_header.gradle"
+
+apply plugin: 'jacoco'
+
+android {
+    defaultConfig {
+        vectorDrawables.useSupportLibrary = true
+        buildConfigField "boolean", "FULL_VERSION", "Boolean.parseBoolean(\"true\")"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [
+                        "moduleName"           : project.getName(),
+                        "HOST"                 : project.getName().replace("-", ""),
+                        "mezzanine.projectPath": project.rootDir.path + "/module-browser"
+                ]
+            }
+        }
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
+}
+
+jacoco {
+    toolVersion = '0.7.9' // See http://www.eclemma.org/jacoco/
+}
+
+kapt {
+    arguments {
+        arg("mezzanine.projectPath", project.rootDir.path + "\\module-browser")
+    }
+}
+
+configurations {
+    all {
+        exclude module: 'httpclient'
+    }
+}
+
+dependencies {
+    api rootProject.ext.timecat["component-CommonData"]
+    api rootProject.ext.timecat["component-CommonRoom"]
+    api rootProject.ext.timecat["component-CommonBmob"]
+    api rootProject.ext.timecat["component-CommonResource"]
+    api rootProject.ext.timecat["component-SelfRouter"]
+    api rootProject.ext.timecat["component-PackAlert"]
+
+    // test dependencies
+    testImplementation rootProject.ext.dependencies["junit"]
+    testImplementation 'org.assertj:assertj-core:3.11.1'
+    testImplementation 'org.mockito:mockito-core:2.23.0'
+    testImplementation 'com.nhaarman:mockito-kotlin:1.6.0', {
+        exclude group: 'org.jetbrains.kotlin'
+    }
+    testImplementation 'org.robolectric:robolectric:3.8'
+    api rootProject.ext.dependencies["eventBus"]
+
+    // support libraries
+    api rootProject.ext.androidx_lib["appcompat"]
+    api rootProject.ext.androidx_lib["design"]
+    api rootProject.ext.androidx_lib["cardview"]
+    api rootProject.ext.androidx_lib["customtabs"]
+    api rootProject.ext.androidx_lib["palette"]
+    api rootProject.ext.androidx_lib["preference"]
+    api rootProject.ext.androidx_lib["recyclerview"]
+
+    // html parsing for reading mode
+    api 'org.jsoup:jsoup:1.13.1'
+
+    // file reading
+    final def mezzanineVersion = '1.1.1'
+    api "com.anthonycr.mezzanine:mezzanine:$mezzanineVersion"
+    kapt "com.anthonycr.mezzanine:mezzanine-compiler:$mezzanineVersion"
+
+    // dependency injection
+    compileOnly 'javax.annotation:jsr250-api:1.0'
+
+    // view binding
+    api rootProject.ext.dependencies["dagger2"]
+
+    // permissions
+    api 'com.anthonycr.grant:permissions:1.1.2'
+
+    // proxy support
+    api('net.i2p.android:client:0.8') {
+        exclude module: "httpclient"
+        exclude group: 'org.apache.httpcomponents'
+    }
+
+//    implementation 'com.squareup.okhttp3:okhttp:3.11.0'
+
+    // rx
+//    implementation 'io.reactivex.rxjava2:rxandroid:2.1.0'
+//    implementation 'io.reactivex.rxjava2:rxjava:2.2.2'
+    api 'io.reactivex.rxjava2:rxkotlin:2.3.0'
+
+    // tor proxy
+    final def netCipherVersion = '2.0.0-alpha1'
+    api "info.guardianproject.netcipher:netcipher:$netCipherVersion"
+    api "info.guardianproject.netcipher:netcipher-webkit:$netCipherVersion"
+
+    api 'com.anthonycr.progress:animated-progress:1.0'
+
+    // memory leak analysis
+    final def leakCanaryVersion = '1.6.1'
+    debugImplementation "com.squareup.leakcanary:leakcanary-android:$leakCanaryVersion"
+    releaseImplementation "com.squareup.leakcanary:leakcanary-android-no-op:$leakCanaryVersion"
+
+    // kotlin
+    api rootProject.ext.dependencies["kotlin-stdlib"]
+}
+
+task jacocoTestReport(type: JacocoReport, dependsOn: ['testLightningPlusDebugUnitTest', 'createLightningPlusDebugCoverageReport']) {
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+
+    final def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+    final def debugTree = fileTree(dir: "$buildDir/intermediates/classes/lightningPlus/debug", excludes: fileFilter)
+    final def kotlinDebugTree = fileTree(dir: "$buildDir/tmp/kotlin-classes/lightningPlusDebug", excludes: fileFilter)
+    final def mainSrc = "${project.projectDir}/src/test/java"
+
+    sourceDirectories.setFrom(files([mainSrc]))
+    classDirectories.setFrom(files([debugTree], [kotlinDebugTree]))
+    executionData.setFrom(fileTree(dir: "$buildDir", includes: [
+            "jacoco/testLightningPlusDebugUnitTest.exec",
+            "outputs/code-coverage/connected/*coverage.ec"
+    ]))
+}
+
+apply from: "${project.rootDir}/gradle/library_tail.gradle"

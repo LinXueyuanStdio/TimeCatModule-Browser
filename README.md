@@ -1,2 +1,2 @@
-# TimeCatModuleTemplate
-时光猫组件模板
+# TimeCatModule-Browser
+时光猫组件 浏览器
