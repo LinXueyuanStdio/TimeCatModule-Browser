@@ -28,8 +28,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/progressBackgroundColor">
+        android:layout_height="wrap_content">
 
         <com.anthonycr.progress.AnimatedProgressBar
             android:id="@+id/progress_view"

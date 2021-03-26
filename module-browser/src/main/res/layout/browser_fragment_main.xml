@@ -31,7 +31,7 @@
                 android:layout_width="@dimen/navigation_width"
                 android:layout_height="match_parent"
                 android:layout_gravity="start"
-                android:background="?attr/drawerBackground"
+                android:background="@drawable/t_drawer_bg"
                 android:fitsSystemWindows="true"
                 android:weightSum="1"/>
 
@@ -40,7 +40,7 @@
                 android:layout_width="@dimen/navigation_width"
                 android:layout_height="match_parent"
                 android:layout_gravity="end"
-                android:background="?attr/drawerBackground"
+                android:background="@drawable/t_drawer_bg"
                 android:fitsSystemWindows="true"
                 android:weightSum="1"/>
 

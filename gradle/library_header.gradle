@@ -1,6 +1,5 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 
 android {
@@ -58,7 +57,6 @@ android {
 
     useLibrary 'org.apache.http.legacy'
 }
-
 
 dependencies {
     kapt rootProject.ext.dependencies["dagger2-compiler"]

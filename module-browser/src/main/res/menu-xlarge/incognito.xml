@@ -6,7 +6,7 @@
     android:id="@+id/action_back"
     android:checkable="false"
     android:enabled="true"
-    android:icon="@drawable/ic_action_back"
+    android:icon="@drawable/ic_back"
     android:title="@string/action_back"
     android:visible="true"
     app:showAsAction="ifRoom"/>

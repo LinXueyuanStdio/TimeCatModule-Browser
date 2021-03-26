@@ -256,9 +256,9 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
     private fun setBookmarkDataSet(items: List<Bookmark>, animate: Boolean) {
         bookmarkAdapter?.updateItems(items.map { BookmarkViewModel(it) })
         val resource = if (uiModel.isCurrentFolderRoot()) {
-            R.drawable.ic_action_star
+            R.drawable.ic_star
         } else {
-            R.drawable.ic_action_back
+            R.drawable.ic_back
         }
 
         if (animate) {
