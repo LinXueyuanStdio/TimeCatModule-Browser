@@ -13,6 +13,7 @@ import acr.browser.lightning.html.history.HistoryPageFactory
 import acr.browser.lightning.html.homepage.HomePageFactory
 import acr.browser.lightning.preference.UserPreferences
 import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import android.os.Message
 import android.webkit.WebView
@@ -162,7 +163,7 @@ class NoOpInitializer : TabInitializer {
  */
 class PermissionInitializer(
         private val url: String,
-        private val activity: Activity,
+        private val activity: Context,
         private val homePageInitializer: HomePageInitializer
 ) : TabInitializer {
 

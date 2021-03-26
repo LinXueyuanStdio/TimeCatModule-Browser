@@ -1,6 +1,5 @@
 package acr.browser.lightning.view
 
-import acr.browser.lightning.BuildConfig
 import acr.browser.lightning.R
 import acr.browser.lightning.adblock.AdBlocker
 import acr.browser.lightning.adblock.allowlist.AllowListModel
@@ -40,22 +39,26 @@ import java.util.*
 import javax.inject.Inject
 
 class LightningWebClient(
-        private val activity: Activity,
-        private val lightningView: LightningView
+    private val activity: Activity,
+    private val lightningView: LightningView,
+    private val uiController: UIController
 ) : WebViewClient() {
 
-    private val uiController: UIController
     private val intentUtils = IntentUtils(activity)
     private val emptyResponseByteArray: ByteArray = byteArrayOf()
 
     @Inject
     internal lateinit var proxyUtils: ProxyUtils
+
     @Inject
     internal lateinit var userPreferences: UserPreferences
+
     @Inject
     internal lateinit var sslWarningPreferences: SslWarningPreferences
+
     @Inject
     internal lateinit var whitelistModel: AllowListModel
+
     @Inject
     internal lateinit var logger: Logger
 
@@ -80,7 +83,6 @@ class LightningWebClient(
 
     init {
         activity.injector.inject(this)
-        uiController = activity as UIController
         adBlock = chooseAdBlocker()
     }
 
@@ -97,7 +99,7 @@ class LightningWebClient(
     }
 
     private fun isAd(pageUrl: String, requestUrl: String) =
-            !whitelistModel.isUrlAllowedAds(pageUrl) && adBlock.isAd(requestUrl)
+        !whitelistModel.isUrlAllowedAds(pageUrl) && adBlock.isAd(requestUrl)
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
@@ -155,28 +157,28 @@ class LightningWebClient(
 
     override fun onReceivedHttpAuthRequest(view: WebView, handler: HttpAuthHandler,
                                            host: String, realm: String) =
-            AlertDialog.Builder(activity).apply {
-                val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_auth_request, null)
+        AlertDialog.Builder(activity).apply {
+            val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_auth_request, null)
 
-                val realmLabel = dialogView.findViewById<TextView>(R.id.auth_request_realm_textview)
-                val name = dialogView.findViewById<EditText>(R.id.auth_request_username_edittext)
-                val password = dialogView.findViewById<EditText>(R.id.auth_request_password_edittext)
+            val realmLabel = dialogView.findViewById<TextView>(R.id.auth_request_realm_textview)
+            val name = dialogView.findViewById<EditText>(R.id.auth_request_username_edittext)
+            val password = dialogView.findViewById<EditText>(R.id.auth_request_password_edittext)
 
-                realmLabel.text = activity.getString(R.string.label_realm, realm)
+            realmLabel.text = activity.getString(R.string.label_realm, realm)
 
-                setView(dialogView)
-                setTitle(R.string.title_sign_in)
-                setCancelable(true)
-                setPositiveButton(R.string.title_sign_in) { _, _ ->
-                    val user = name.text.toString()
-                    val pass = password.text.toString()
-                    handler.proceed(user.trim(), pass.trim())
-                    logger.log(TAG, "Attempting HTTP Authentication")
-                }
-                setNegativeButton(R.string.action_cancel) { _, _ ->
-                    handler.cancel()
-                }
-            }.resizeAndShow()
+            setView(dialogView)
+            setTitle(R.string.title_sign_in)
+            setCancelable(true)
+            setPositiveButton(R.string.title_sign_in) { _, _ ->
+                val user = name.text.toString()
+                val pass = password.text.toString()
+                handler.proceed(user.trim(), pass.trim())
+                logger.log(TAG, "Attempting HTTP Authentication")
+            }
+            setNegativeButton(R.string.action_cancel) { _, _ ->
+                handler.cancel()
+            }
+        }.resizeAndShow()
 
     override fun onScaleChanged(view: WebView, oldScale: Float, newScale: Float) {
         if (view.isShown && lightningView.userPreferences.textReflowEnabled) {
@@ -234,25 +236,25 @@ class LightningWebClient(
     }
 
     override fun onFormResubmission(view: WebView, dontResend: Message, resend: Message) =
-            AlertDialog.Builder(activity).apply {
-                setTitle(activity.getString(R.string.title_form_resubmission))
-                setMessage(activity.getString(R.string.message_form_resubmission))
-                setCancelable(true)
-                setPositiveButton(activity.getString(R.string.action_yes)) { _, _ ->
-                    resend.sendToTarget()
-                }
-                setNegativeButton(activity.getString(R.string.action_no)) { _, _ ->
-                    dontResend.sendToTarget()
-                }
-            }.resizeAndShow()
+        AlertDialog.Builder(activity).apply {
+            setTitle(activity.getString(R.string.title_form_resubmission))
+            setMessage(activity.getString(R.string.message_form_resubmission))
+            setCancelable(true)
+            setPositiveButton(activity.getString(R.string.action_yes)) { _, _ ->
+                resend.sendToTarget()
+            }
+            setNegativeButton(activity.getString(R.string.action_no)) { _, _ ->
+                dontResend.sendToTarget()
+            }
+        }.resizeAndShow()
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean =
-            shouldOverrideLoading(view, request.url.toString()) || super.shouldOverrideUrlLoading(view, request)
+        shouldOverrideLoading(view, request.url.toString()) || super.shouldOverrideUrlLoading(view, request)
 
     @Suppress("OverridingDeprecatedMember", "DEPRECATION")
     override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean =
-            shouldOverrideLoading(view, url) || super.shouldOverrideUrlLoading(view, url)
+        shouldOverrideLoading(view, url) || super.shouldOverrideUrlLoading(view, url)
 
     private fun shouldOverrideLoading(view: WebView, url: String): Boolean {
         // Check if configured proxy is available
@@ -281,20 +283,20 @@ class LightningWebClient(
     }
 
     private fun continueLoadingUrl(webView: WebView, url: String, headers: Map<String, String>) =
-            when {
-                headers.isEmpty() -> false
-                ApiUtils.doesSupportWebViewHeaders() -> {
-                    webView.loadUrl(url, headers)
-                    true
-                }
-                else -> false
+        when {
+            headers.isEmpty() -> false
+            ApiUtils.doesSupportWebViewHeaders() -> {
+                webView.loadUrl(url, headers)
+                true
             }
+            else -> false
+        }
 
     private fun isMailOrIntent(url: String, view: WebView): Boolean {
         if (url.startsWith("mailto:")) {
             val mailTo = MailTo.parse(url)
             val i = Utils.newEmailIntent(mailTo.to, mailTo.subject,
-                    mailTo.body, mailTo.cc)
+                mailTo.body, mailTo.cc)
             activity.startActivity(i)
             view.reload()
             return true
@@ -322,7 +324,7 @@ class LightningWebClient(
 
             if (file.exists()) {
                 val newMimeType = MimeTypeMap.getSingleton()
-                        .getMimeTypeFromExtension(Utils.guessFileExtension(file.toString()))
+                    .getMimeTypeFromExtension(Utils.guessFileExtension(file.toString()))
 
                 val intent = Intent(Intent.ACTION_VIEW)
                 intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION

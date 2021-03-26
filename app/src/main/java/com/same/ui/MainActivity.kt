@@ -1,6 +1,7 @@
 package com.same.ui
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -8,7 +9,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
-import com.timecat.identity.readonly.RouterHub
 import com.xiaojinzi.component.impl.*
 
 class MainActivity : Activity() {
@@ -16,10 +16,9 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         val linearLayout = LinearLayout(this)
         linearLayout.orientation = LinearLayout.VERTICAL
-        linearLayout.addView(createButton("登录", RouterHub.LOGIN_LoginActivity))
-        linearLayout.addView(createButton("添加插件", RouterHub.USER_AddPluginAppActivity))
-        linearLayout.addView(createButton("添加动态", RouterHub.USER_AddMomentActivity))
-        linearLayout.addView(createButton("背包", RouterHub.USER_BagActivity))
+        linearLayout.addView(createButton("打开") {
+            startActivity(Intent(this, BrowserActivity::class.java))
+        })
         setContentView(linearLayout)
     }
 

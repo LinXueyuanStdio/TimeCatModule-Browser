@@ -3,9 +3,9 @@
  */
 package acr.browser.lightning.settings.fragment
 
-import acr.browser.lightning.BuildConfig
 import acr.browser.lightning.R
 import android.os.Bundle
+import com.blankj.utilcode.util.AppUtils
 
 class AboutSettingsFragment : AbstractSettingsFragment() {
 
@@ -16,7 +16,7 @@ class AboutSettingsFragment : AbstractSettingsFragment() {
 
         clickablePreference(
             preference = SETTINGS_VERSION,
-            summary = BuildConfig.VERSION_NAME,
+            summary = AppUtils.getAppVersionName(),
             onClick = { }
         )
     }

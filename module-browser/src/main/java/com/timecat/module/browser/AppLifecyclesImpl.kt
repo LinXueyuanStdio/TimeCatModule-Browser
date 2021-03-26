@@ -1,7 +1,6 @@
 package com.timecat.module.browser
 
 import acr.browser.lightning.BrowserApp
-import acr.browser.lightning.BuildConfig
 import acr.browser.lightning.database.bookmark.BookmarkExporter
 import acr.browser.lightning.database.bookmark.BookmarkRepository
 import acr.browser.lightning.device.BuildInfo
@@ -16,6 +15,7 @@ import android.os.Build
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatDelegate
 import com.jess.arms.base.delegate.AppLifecycles
+import com.timecat.component.commonsdk.utils.override.LogUtil
 import io.reactivex.Scheduler
 import io.reactivex.Single
 import io.reactivex.plugins.RxJavaPlugins
@@ -31,13 +31,17 @@ import javax.inject.Inject
 class AppLifecyclesImpl : AppLifecycles {
     @Inject
     internal lateinit var developerPreferences: DeveloperPreferences
+
     @Inject
     internal lateinit var bookmarkModel: BookmarkRepository
+
     @Inject
     @field:DatabaseScheduler
     internal lateinit var databaseScheduler: Scheduler
+
     @Inject
     internal lateinit var logger: Logger
+
     @Inject
     internal lateinit var buildInfo: BuildInfo
 
@@ -73,7 +77,7 @@ class AppLifecyclesImpl : AppLifecycles {
 //        }
 
         RxJavaPlugins.setErrorHandler { throwable: Throwable? ->
-            if (BuildConfig.DEBUG && throwable != null) {
+            if (LogUtil.DEBUG && throwable != null) {
                 FileUtils.writeCrashToStorage(throwable)
                 throw throwable
             }
@@ -82,13 +86,13 @@ class AppLifecyclesImpl : AppLifecycles {
         BrowserApp.appComponent.inject(this)
 
         Single.fromCallable(bookmarkModel::count)
-                .filter { it == 0L }
-                .flatMapCompletable {
-                    val assetsBookmarks = BookmarkExporter.importBookmarksFromAssets(application)
-                    bookmarkModel.addBookmarkList(assetsBookmarks)
-                }
-                .subscribeOn(databaseScheduler)
-                .subscribe()
+            .filter { it == 0L }
+            .flatMapCompletable {
+                val assetsBookmarks = BookmarkExporter.importBookmarksFromAssets(application)
+                bookmarkModel.addBookmarkList(assetsBookmarks)
+            }
+            .subscribeOn(databaseScheduler)
+            .subscribe()
         if (buildInfo.buildType == BuildType.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
         }

@@ -56,6 +56,7 @@ class LightningView(
     private val homePageInitializer: HomePageInitializer,
     private val bookmarkPageInitializer: BookmarkPageInitializer,
     private val downloadPageInitializer: DownloadPageInitializer,
+    private val uiController: UIController,
     private val logger: Logger
 ) {
 
@@ -74,7 +75,6 @@ class LightningView(
     var webView: WebView? = null
         private set
 
-    private val uiController: UIController
     private val gestureDetector: GestureDetector
     private val paint = Paint()
 
@@ -183,12 +183,11 @@ class LightningView(
     }
     init {
         activity.injector.inject(this)
-        uiController = activity as UIController
 
         titleInfo = LightningViewTitle(activity)
 
         maxFling = ViewConfiguration.get(activity).scaledMaximumFlingVelocity.toFloat()
-        lightningWebClient = LightningWebClient(activity, this)
+        lightningWebClient = LightningWebClient(activity, this, uiController)
         gestureDetector = GestureDetector(activity, CustomGestureListener())
 
         val tab = WebView(getFixedContext(activity)).also { webView = it }.apply {
@@ -208,7 +207,7 @@ class LightningView(
             isScrollbarFadingEnabled = true
             isSaveEnabled = true
             setNetworkAvailable(true)
-            webChromeClient = LightningChromeClient(activity, this@LightningView)
+            webChromeClient = LightningChromeClient(activity, this@LightningView, uiController)
             webViewClient = lightningWebClient
 
             setDownloadListener(LightningDownloadListener(activity))

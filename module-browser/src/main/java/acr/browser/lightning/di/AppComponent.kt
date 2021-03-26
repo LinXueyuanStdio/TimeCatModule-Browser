@@ -20,12 +20,18 @@ import acr.browser.lightning.utils.ProxyUtils
 import acr.browser.lightning.view.LightningChromeClient
 import acr.browser.lightning.view.LightningView
 import acr.browser.lightning.view.LightningWebClient
+import com.timecat.module.browser.AbsBrowserFragment
+import com.timecat.module.browser.AbsThemeBrowserFragment
 import dagger.Component
 import javax.inject.Singleton
 
 @Singleton
 @Component(modules = [(AppModule::class), (AppBindsModule::class)])
 interface AppComponent {
+
+    fun inject(fragment: AbsThemeBrowserFragment)
+
+    fun inject(fragment: AbsBrowserFragment)
 
     fun inject(activity: BrowserActivity)
 

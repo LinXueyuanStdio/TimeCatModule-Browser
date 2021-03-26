@@ -1,5 +1,6 @@
 package acr.browser.lightning.browser
 
+import acr.browser.lightning.controller.UIController
 import acr.browser.lightning.di.DatabaseScheduler
 import acr.browser.lightning.di.DiskScheduler
 import acr.browser.lightning.di.MainScheduler
@@ -13,6 +14,7 @@ import acr.browser.lightning.view.*
 import android.app.Activity
 import android.app.Application
 import android.app.SearchManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.webkit.URLUtil
@@ -82,7 +84,10 @@ class TabsManager @Inject constructor(
      * new provided [intent] and emit the last tab that should be displayed. By default operates on
      * a background scheduler and emits on the foreground scheduler.
      */
-    fun initializeTabs(activity: Activity, intent: Intent?, incognito: Boolean): Single<LightningView> =
+    fun initializeTabs(activity: Activity,
+                       intent: Intent?,
+                       incognito: Boolean,
+                       uiController:UIController): Single<LightningView> =
         Single
             .just(Option.fromNullable(
                 if (intent?.action == Intent.ACTION_WEB_SEARCH) {
@@ -102,7 +107,7 @@ class TabsManager @Inject constructor(
             }
             .subscribeOn(databaseScheduler)
             .observeOn(mainScheduler)
-            .map { newTab(activity, it, incognito) }
+            .map { newTab(activity, it, incognito, uiController) }
             .lastOrError()
             .doAfterSuccess { finishInitialization() }
 
@@ -117,7 +122,7 @@ class TabsManager @Inject constructor(
     /**
      * Returns an [Observable] that emits the [TabInitializer] for normal operation mode.
      */
-    private fun initializeRegularMode(initialUrl: String?, activity: Activity): Observable<TabInitializer> =
+    private fun initializeRegularMode(initialUrl: String?, activity: Context): Observable<TabInitializer> =
         restorePreviousTabs()
             .concatWith(Maybe.fromCallable<TabInitializer> {
                 return@fromCallable initialUrl?.let {
@@ -246,7 +251,8 @@ class TabsManager @Inject constructor(
     fun newTab(
         activity: Activity,
         tabInitializer: TabInitializer,
-        isIncognito: Boolean
+        isIncognito: Boolean,
+        uiController:UIController
     ): LightningView {
         logger.log(TAG, "New tab")
         val tab = LightningView(
@@ -256,6 +262,7 @@ class TabsManager @Inject constructor(
             homePageInitializer,
             bookmarkPageInitializer,
             downloadPageInitializer,
+            uiController,
             logger
         )
         tabList.add(tab)

@@ -6,6 +6,7 @@ import acr.browser.lightning.constant.FILE
 import acr.browser.lightning.constant.INTENT_ORIGIN
 import acr.browser.lightning.constant.SCHEME_BOOKMARKS
 import acr.browser.lightning.constant.SCHEME_HOMEPAGE
+import acr.browser.lightning.controller.UIController
 import acr.browser.lightning.di.MainScheduler
 import acr.browser.lightning.html.bookmark.BookmarkPageFactory
 import acr.browser.lightning.html.homepage.HomePageFactory
@@ -29,6 +30,8 @@ import io.reactivex.rxkotlin.subscribeBy
  * browser.
  */
 class BrowserPresenter(
+    private val activity: Activity,
+    private val uiController: UIController,
     private val view: BrowserView,
     private val isIncognito: Boolean,
     private val userPreferences: UserPreferences,
@@ -54,7 +57,7 @@ class BrowserPresenter(
      * @param intent the intent to handle, may be null.
      */
     fun setupTabs(intent: Intent?) {
-        tabsModel.initializeTabs(view as Activity, intent, isIncognito)
+        tabsModel.initializeTabs(activity, intent, isIncognito, uiController)
             .subscribeBy(
                 onSuccess = {
                     // At this point we always have at least a tab in the tab manager
@@ -207,7 +210,7 @@ class BrowserPresenter(
      *
      * @param intent the intent to handle, may be null.
      */
-    fun onNewIntent(intent: Intent?) = tabsModel.doAfterInitialization {
+    fun onNewIntent(uiController: UIController, intent: Intent?) = tabsModel.doAfterInitialization {
         val url = if (intent?.action == Intent.ACTION_WEB_SEARCH) {
             tabsModel.extractSearchFromIntent(intent)
         } else {
@@ -295,7 +298,7 @@ class BrowserPresenter(
 
         logger.log(TAG, "New tab, show: $show")
 
-        val startingTab = tabsModel.newTab(view as Activity, tabInitializer, isIncognito)
+        val startingTab = tabsModel.newTab(activity, tabInitializer, isIncognito, uiController)
         if (tabsModel.size() == 1) {
             startingTab.resumeTimers()
         }

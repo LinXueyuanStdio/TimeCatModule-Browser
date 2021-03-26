@@ -30,11 +30,11 @@ import javax.inject.Inject
 
 class LightningChromeClient(
     private val activity: Activity,
-    private val lightningView: LightningView
+    private val lightningView: LightningView,
+    private val uiController: UIController
 ) : WebChromeClient(), WebRtcPermissionsView {
 
     private val geoLocationPermissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-    private val uiController: UIController
     @Inject internal lateinit var faviconModel: FaviconModel
     @Inject internal lateinit var userPreferences: UserPreferences
     @Inject internal lateinit var webRtcPermissionsModel: WebRtcPermissionsModel
@@ -42,7 +42,6 @@ class LightningChromeClient(
 
     init {
         activity.injector.inject(this)
-        uiController = activity as UIController
     }
 
     override fun onProgressChanged(view: WebView, newProgress: Int) {

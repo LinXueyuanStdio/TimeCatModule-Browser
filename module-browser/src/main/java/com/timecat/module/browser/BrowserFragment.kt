@@ -1,11 +1,49 @@
 package com.timecat.module.browser
 
+import acr.browser.lightning.IncognitoActivity
+import acr.browser.lightning.R
+import acr.browser.lightning.browser.activity.BrowserActivity
+import android.content.Intent
+import android.os.Build
+import android.view.KeyEvent
+import android.view.Menu
+import android.webkit.CookieManager
+import android.webkit.CookieSyncManager
+import com.timecat.identity.readonly.RouterHub
+import com.xiaojinzi.component.anno.FragmentAnno
+import io.reactivex.Completable
+
 /**
  * @author 林学渊
  * @email linxy59@mail2.sysu.edu.cn
- * @date 2021/1/23
- * @description 浏览器作为 fragment 嵌入主应用中
+ * @date 2021/3/25
+ * @description null
  * @usage null
  */
-class BrowserFragment {
+@FragmentAnno(RouterHub.MASTER_BrowserFragment)
+class BrowserFragment : AbsBrowserFragment() {
+
+    @Suppress("DEPRECATION")
+    public override fun updateCookiePreference(): Completable = Completable.fromAction {
+        val cookieManager = CookieManager.getInstance()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            CookieSyncManager.createInstance(_mActivity)
+        }
+        cookieManager.setAcceptCookie(userPreferences.cookiesEnabled)
+    }
+
+    override fun menu(): Int =R.menu.main
+
+    override fun onPause() {
+        super.onPause()
+        saveOpenTabs()
+    }
+
+    override fun updateHistory(title: String?, url: String) = addItemToHistory(title, url)
+
+    override fun isIncognito() = false
+
+    override fun closeActivity() = closeDrawers {
+        performExitCleanUp()
+    }
 }

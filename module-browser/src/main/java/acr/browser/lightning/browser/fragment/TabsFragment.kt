@@ -64,7 +64,6 @@ class TabsFragment : Fragment(), View.OnClickListener, View.OnLongClickListener,
         super.onCreate(savedInstanceState)
         injector.inject(this)
         val context = requireNotNull(context) { "Context should never be null in onCreate" }
-        uiController = activity as UIController
         isIncognito = arguments?.getBoolean(IS_INCOGNITO, false) == true
         showInNavigationDrawer = arguments?.getBoolean(VERTICAL_MODE, true) == true
         darkTheme = userPreferences.useTheme != 0 || isIncognito
@@ -360,8 +359,9 @@ class TabsFragment : Fragment(), View.OnClickListener, View.OnLongClickListener,
     companion object {
 
         @JvmStatic
-        fun createTabsFragment(isIncognito: Boolean, showTabsInDrawer: Boolean): TabsFragment {
+        fun createTabsFragment(isIncognito: Boolean, showTabsInDrawer: Boolean, controller: UIController): TabsFragment {
             return TabsFragment().apply {
+                uiController = controller
                 arguments = Bundle().apply {
                     putBoolean(TabsFragment.IS_INCOGNITO, isIncognito)
                     putBoolean(TabsFragment.VERTICAL_MODE, showTabsInDrawer)
