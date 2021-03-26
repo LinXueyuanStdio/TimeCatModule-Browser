@@ -19,11 +19,11 @@
                 android:layout_height="match_parent"
                 android:orientation="vertical">
 
-                <include layout="@layout/toolbar"/>
+                <include layout="@layout/browser_toolbar"/>
 
                 <include layout="@layout/browser_content"/>
 
-                <include layout="@layout/search_interface"/>
+                <include layout="@layout/browser_search_interface"/>
             </view>
 
             <FrameLayout

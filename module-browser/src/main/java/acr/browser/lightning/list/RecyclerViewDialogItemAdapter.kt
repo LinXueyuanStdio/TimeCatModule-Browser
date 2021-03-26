@@ -21,7 +21,7 @@ class RecyclerViewDialogItemAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DialogItemViewHolder =
         DialogItemViewHolder(
-            parent.context.inflater.inflate(R.layout.dialog_list_item, parent, false)
+            parent.context.inflater.inflate(R.layout.browser_dialog_list_item, parent, false)
         )
 
     override fun getItemCount(): Int = listItems.size

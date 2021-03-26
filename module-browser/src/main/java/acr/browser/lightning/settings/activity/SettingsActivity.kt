@@ -26,7 +26,7 @@ class SettingsActivity : ThemableSettingsActivity() {
         // this is a workaround for the Toolbar in PreferenceActivity
         val root = findViewById<ViewGroup>(android.R.id.content)
         val content = root.getChildAt(0) as LinearLayout
-        val toolbarContainer = View.inflate(this, R.layout.toolbar_settings, null) as LinearLayout
+        val toolbarContainer = View.inflate(this, R.layout.browser_toolbar_settings, null) as LinearLayout
 
         root.removeAllViews()
         toolbarContainer.addView(content)

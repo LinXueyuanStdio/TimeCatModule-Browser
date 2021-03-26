@@ -81,6 +81,7 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.view.ContextThemeWrapper
+import androidx.appcompat.widget.Toolbar
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
@@ -110,7 +111,7 @@ import javax.inject.Inject
  * @description 浏览器作为 fragment 嵌入主应用中
  * @usage null
  */
-abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UIController, OnClickListener {
+abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UIController, OnClickListener, Toolbar.OnMenuItemClickListener {
     open fun theme(): Int = R.style.Theme_LightTheme
     abstract fun menu(): Int
 
@@ -352,6 +353,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         initializeToolbarHeight(resources.configuration)
         toolbar.inflateMenu(menu())
         onCreateOptionsMenu(toolbar.menu)
+        toolbar.setOnMenuItemClickListener(this)
 
         val actionBar = toolbar
 
@@ -429,7 +431,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
 
         // set display options of the ActionBar
         val inflater = LayoutInflater.from(_mActivity)
-        val customView = inflater.inflate(R.layout.toolbar_content, actionBar, false)
+        val customView = inflater.inflate(R.layout.browser_toolbar_content, actionBar, false)
         actionBar.addView(customView)
 
         customView.layoutParams = customView.layoutParams.apply {
@@ -871,124 +873,6 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                 }
             }
             return super.dispatchKeyEvent(event)
-        }
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val currentView = tabsManager.currentTab
-        val currentUrl = currentView?.url
-        // Handle action buttons
-        when (item.itemId) {
-            android.R.id.home -> {
-                if (drawer_layout.isDrawerOpen(getBookmarkDrawer())) {
-                    drawer_layout.closeDrawer(getBookmarkDrawer())
-                }
-                return true
-            }
-            R.id.action_back -> {
-                if (currentView?.canGoBack() == true) {
-                    currentView.goBack()
-                }
-                return true
-            }
-            R.id.action_forward -> {
-                if (currentView?.canGoForward() == true) {
-                    currentView.goForward()
-                }
-                return true
-            }
-            R.id.action_add_to_homescreen -> {
-                if (currentView != null
-                    && currentView.url.isNotBlank()
-                    && !UrlUtils.isSpecialUrl(currentView.url)
-                ) {
-                    HistoryEntry(currentView.url, currentView.title).also {
-                        Utils.createShortcut(_mActivity, it, currentView.favicon)
-                        logger.log(TAG, "Creating shortcut: ${it.title} ${it.url}")
-                    }
-                }
-                return true
-            }
-            R.id.action_new_tab -> {
-                presenter?.newTab(homePageInitializer, true)
-                return true
-            }
-            R.id.action_incognito -> {
-                startActivity(IncognitoActivity.createIntent(_mActivity))
-                return true
-            }
-            R.id.action_share -> {
-                IntentUtils(_mActivity).shareUrl(currentUrl, currentView?.title)
-                return true
-            }
-            R.id.action_bookmarks -> {
-                openBookmarks()
-                return true
-            }
-            R.id.action_copy -> {
-                if (currentUrl != null && !UrlUtils.isSpecialUrl(currentUrl)) {
-                    clipboardManager.setPrimaryClip(ClipData.newPlainText("label", currentUrl))
-                    showSnackbar(R.string.message_link_copied)
-                }
-                return true
-            }
-            R.id.action_settings -> {
-                startActivity(Intent(_mActivity, SettingsActivity::class.java))
-                return true
-            }
-            R.id.action_history -> {
-                openHistory()
-                return true
-            }
-            R.id.action_downloads -> {
-                openDownloads()
-                return true
-            }
-            R.id.action_add_bookmark -> {
-                if (currentUrl != null && !UrlUtils.isSpecialUrl(currentUrl)) {
-                    addBookmark(currentView.title, currentUrl)
-                }
-                return true
-            }
-            R.id.action_find -> {
-                findInPage()
-                return true
-            }
-            R.id.action_reading_mode -> {
-                if (currentUrl != null) {
-                    val read = Intent(_mActivity, ReadingActivity::class.java)
-                    read.putExtra(LOAD_READING_URL, currentUrl)
-                    startActivity(read)
-                }
-                return true
-            }
-            R.id.actionbar_collect -> {
-                if (currentView != null
-                    && currentView.url.isNotBlank()
-                    && !UrlUtils.isSpecialUrl(currentView.url)
-                ) {
-                    if (UserDao.getCurrentUser() != null) {
-                        if (DEF.config().getBoolean(IS_FIRST_COLLECTURL, true)) {
-                            MaterialDialog(_mActivity).show {
-                                message(text = "网址不同于文章，相同网址可多次进行收藏，且不会显示收藏状态。")
-                                positiveButton(text = "知道了") {
-                                    DEF.config().save(IS_FIRST_COLLECTURL, false)
-                                    collectUrl(currentView.title, currentView.url)
-                                }
-                            }
-                        } else {
-                            collectUrl(currentView.title, currentView.url)
-                        }
-                    } else {
-                        toast("请先登录")
-                    }
-                } else {
-                    toast("暂不支持当前页面")
-                }
-
-                return true
-            }
-            else -> return super.onOptionsItemSelected(item)
         }
     }
 
@@ -2134,5 +2018,123 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         private val MATCH_PARENT = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         private val COVER_SCREEN_PARAMS = FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
 
+    }
+
+    override fun onMenuItemClick(item: MenuItem): Boolean {
+        val currentView = tabsManager.currentTab
+        val currentUrl = currentView?.url
+        // Handle action buttons
+        when (item.itemId) {
+            android.R.id.home -> {
+                if (drawer_layout.isDrawerOpen(getBookmarkDrawer())) {
+                    drawer_layout.closeDrawer(getBookmarkDrawer())
+                }
+                return true
+            }
+            R.id.action_back -> {
+                if (currentView?.canGoBack() == true) {
+                    currentView.goBack()
+                }
+                return true
+            }
+            R.id.action_forward -> {
+                if (currentView?.canGoForward() == true) {
+                    currentView.goForward()
+                }
+                return true
+            }
+            R.id.action_add_to_homescreen -> {
+                if (currentView != null
+                    && currentView.url.isNotBlank()
+                    && !UrlUtils.isSpecialUrl(currentView.url)
+                ) {
+                    HistoryEntry(currentView.url, currentView.title).also {
+                        Utils.createShortcut(_mActivity, it, currentView.favicon)
+                        logger.log(TAG, "Creating shortcut: ${it.title} ${it.url}")
+                    }
+                }
+                return true
+            }
+            R.id.action_new_tab -> {
+                presenter?.newTab(homePageInitializer, true)
+                return true
+            }
+            R.id.action_incognito -> {
+                startActivity(IncognitoActivity.createIntent(_mActivity))
+                return true
+            }
+            R.id.action_share -> {
+                IntentUtils(_mActivity).shareUrl(currentUrl, currentView?.title)
+                return true
+            }
+            R.id.action_bookmarks -> {
+                openBookmarks()
+                return true
+            }
+            R.id.action_copy -> {
+                if (currentUrl != null && !UrlUtils.isSpecialUrl(currentUrl)) {
+                    clipboardManager.setPrimaryClip(ClipData.newPlainText("label", currentUrl))
+                    showSnackbar(R.string.message_link_copied)
+                }
+                return true
+            }
+            R.id.action_settings -> {
+                startActivity(Intent(_mActivity, SettingsActivity::class.java))
+                return true
+            }
+            R.id.action_history -> {
+                openHistory()
+                return true
+            }
+            R.id.action_downloads -> {
+                openDownloads()
+                return true
+            }
+            R.id.action_add_bookmark -> {
+                if (currentUrl != null && !UrlUtils.isSpecialUrl(currentUrl)) {
+                    addBookmark(currentView.title, currentUrl)
+                }
+                return true
+            }
+            R.id.action_find -> {
+                findInPage()
+                return true
+            }
+            R.id.action_reading_mode -> {
+                if (currentUrl != null) {
+                    val read = Intent(_mActivity, ReadingActivity::class.java)
+                    read.putExtra(LOAD_READING_URL, currentUrl)
+                    startActivity(read)
+                }
+                return true
+            }
+            R.id.actionbar_collect -> {
+                if (currentView != null
+                    && currentView.url.isNotBlank()
+                    && !UrlUtils.isSpecialUrl(currentView.url)
+                ) {
+                    if (UserDao.getCurrentUser() != null) {
+                        if (DEF.config().getBoolean(IS_FIRST_COLLECTURL, true)) {
+                            MaterialDialog(_mActivity).show {
+                                message(text = "网址不同于文章，相同网址可多次进行收藏，且不会显示收藏状态。")
+                                positiveButton(text = "知道了") {
+                                    DEF.config().save(IS_FIRST_COLLECTURL, false)
+                                    collectUrl(currentView.title, currentView.url)
+                                }
+                            }
+                        } else {
+                            collectUrl(currentView.title, currentView.url)
+                        }
+                    } else {
+                        toast("请先登录")
+                    }
+                } else {
+                    toast("暂不支持当前页面")
+                }
+
+                return true
+            }
+            else -> return false
+        }
     }
 }

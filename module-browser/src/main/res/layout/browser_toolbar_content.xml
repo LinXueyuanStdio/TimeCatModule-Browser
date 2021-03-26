@@ -19,6 +19,6 @@
             android:layout_height="wrap_content" />
     </FrameLayout>
 
-    <include layout="@layout/search" />
+    <include layout="@layout/browser_search" />
 
 </LinearLayout>

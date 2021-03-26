@@ -45,7 +45,7 @@ object BrowserDialog {
     fun showWithIcons(activity: Activity, title: String?, vararg items: DialogItem) {
         val builder = AlertDialog.Builder(activity)
 
-        val layout = activity.inflater.inflate(R.layout.list_dialog, null)
+        val layout = activity.inflater.inflate(R.layout.browser_list_dialog, null)
 
         val titleView = layout.findViewById<TextView>(R.id.dialog_title)
         val recyclerView = layout.findViewById<RecyclerView>(R.id.dialog_list)
@@ -80,7 +80,7 @@ object BrowserDialog {
     fun show(activity: Activity, title: String?, vararg items: DialogItem) {
         val builder = AlertDialog.Builder(activity)
 
-        val layout = activity.inflater.inflate(R.layout.list_dialog, null)
+        val layout = activity.inflater.inflate(R.layout.browser_list_dialog, null)
 
         val titleView = layout.findViewById<TextView>(R.id.dialog_title)
         val recyclerView = layout.findViewById<RecyclerView>(R.id.dialog_list)
@@ -155,7 +155,7 @@ object BrowserDialog {
         @StringRes action: Int,
         textInputListener: (String) -> Unit
     ) {
-        val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_edit_text, null)
+        val dialogView = LayoutInflater.from(activity).inflate(R.layout.browser_dialog_edit_text, null)
         val editText = dialogView.findViewById<EditText>(R.id.dialog_edit_text)
 
         editText.setHint(hint)

@@ -36,7 +36,6 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.android.synthetic.main.tab_drawer.*
 import java.util.*
 import javax.inject.Inject
 
@@ -59,6 +58,17 @@ class TabsFragment : Fragment(), View.OnClickListener, View.OnLongClickListener,
 
     @Inject
     internal lateinit var userPreferences: UserPreferences
+    private lateinit var tab_header_button: FrameLayout
+    private lateinit var plusIcon: ImageView
+    private lateinit var tabs_list: RecyclerView
+    private lateinit var action_back: FrameLayout
+    private lateinit var icon_back: ImageView
+    private lateinit var action_home: FrameLayout
+    private lateinit var icon_home: ImageView
+    private lateinit var action_forward: FrameLayout
+    private lateinit var icon_forward: ImageView
+    private lateinit var new_tab_button: FrameLayout
+    private lateinit var icon_plus: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,21 +87,31 @@ class TabsFragment : Fragment(), View.OnClickListener, View.OnLongClickListener,
         val view: View
         val context = inflater.context
         if (showInNavigationDrawer) {
-            view = inflater.inflate(R.layout.tab_drawer, container, false)
+            view = inflater.inflate(R.layout.browser_tab_drawer, container, false)
             setupFrameLayoutButton(view, R.id.tab_header_button, R.id.plusIcon)
             setupFrameLayoutButton(view, R.id.new_tab_button, R.id.icon_plus)
             setupFrameLayoutButton(view, R.id.action_back, R.id.icon_back)
             setupFrameLayoutButton(view, R.id.action_forward, R.id.icon_forward)
             setupFrameLayoutButton(view, R.id.action_home, R.id.icon_home)
         } else {
-            view = inflater.inflate(R.layout.tab_strip, container, false)
+            view = inflater.inflate(R.layout.browser_tab_strip, container, false)
             view.findViewById<ImageView>(R.id.new_tab_button).apply {
                 setColorFilter(context.color(R.color.icon_dark_theme))
                 setOnClickListener(this@TabsFragment)
                 setOnLongClickListener(this@TabsFragment)
             }
         }
-
+        tab_header_button = view.findViewById(R.id.tab_header_button)
+        plusIcon = view.findViewById(R.id.plusIcon)
+        tabs_list = view.findViewById(R.id.tabs_list)
+        action_back = view.findViewById(R.id.action_back)
+        icon_back = view.findViewById(R.id.icon_back)
+        action_home = view.findViewById(R.id.action_home)
+        icon_home = view.findViewById(R.id.icon_home)
+        action_forward = view.findViewById(R.id.action_forward)
+        icon_forward = view.findViewById(R.id.icon_forward)
+        new_tab_button = view.findViewById(R.id.new_tab_button)
+        icon_plus = view.findViewById(R.id.icon_plus)
         return view
     }
 
@@ -202,7 +222,7 @@ class TabsFragment : Fragment(), View.OnClickListener, View.OnLongClickListener,
             private val drawerTabs: Boolean
     ) : RecyclerView.Adapter<LightningViewAdapter.LightningViewHolder>() {
 
-        private val layoutResourceId: Int = if (drawerTabs) R.layout.tab_list_item else R.layout.tab_list_item_horizontal
+        private val layoutResourceId: Int = if (drawerTabs) R.layout.browser_tab_list_item else R.layout.browser_tab_list_item_horizontal
         private val backgroundTabDrawable: Drawable?
         private val foregroundTabBitmap: Bitmap?
         private var tabList: List<TabViewState> = ArrayList()

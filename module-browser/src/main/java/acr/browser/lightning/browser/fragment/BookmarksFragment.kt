@@ -34,6 +34,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.IdRes
 import androidx.fragment.app.Fragment
@@ -44,7 +45,6 @@ import io.reactivex.Scheduler
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
-import kotlinx.android.synthetic.main.bookmark_drawer.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
@@ -100,6 +100,16 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
     private var bookmarkUpdateSubscription: Disposable? = null
 
     private val uiModel = BookmarkUiModel()
+    private lateinit var bookmark_title_layout: LinearLayout
+    private lateinit var bookmark_back_button: FrameLayout
+    private lateinit var bookmark_back_button_image: ImageView
+    private lateinit var bookmark_list_view: RecyclerView
+    private lateinit var action_page_tools: FrameLayout
+    private lateinit var action_page_tools_image: ImageView
+    private lateinit var action_add_bookmark: FrameLayout
+    private lateinit var action_add_bookmark_image: ImageView
+    private lateinit var action_reading: FrameLayout
+    private lateinit var action_reading_image: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,7 +132,18 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-        inflater.inflate(R.layout.bookmark_drawer, container, false)
+        inflater.inflate(R.layout.browser_bookmark_drawer, container, false).apply {
+            bookmark_title_layout = findViewById(R.id.bookmark_title_layout)
+            bookmark_back_button = findViewById(R.id.bookmark_back_button)
+            bookmark_back_button_image = findViewById(R.id.bookmark_back_button_image)
+            bookmark_list_view = findViewById(R.id.bookmark_list_view)
+            action_page_tools = findViewById(R.id.action_page_tools)
+            action_page_tools_image = findViewById(R.id.action_page_tools_image)
+            action_add_bookmark = findViewById(R.id.action_add_bookmark)
+            action_add_bookmark_image = findViewById(R.id.action_add_bookmark_image)
+            action_reading = findViewById(R.id.action_reading)
+            action_reading_image = findViewById(R.id.action_reading_image)
+        }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -434,7 +455,7 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookmarkViewHolder {
             val inflater = LayoutInflater.from(parent.context)
-            val itemView = inflater.inflate(R.layout.bookmark_list_item, parent, false)
+            val itemView = inflater.inflate(R.layout.browser_bookmark_list_item, parent, false)
 
             return BookmarkViewHolder(itemView, this, onItemLongClickListener, onItemClickListener)
         }

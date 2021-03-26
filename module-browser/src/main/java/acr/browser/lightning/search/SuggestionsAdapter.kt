@@ -128,7 +128,7 @@ class SuggestionsAdapter(
 
         if (convertView == null) {
             val inflater = LayoutInflater.from(context)
-            finalView = inflater.inflate(R.layout.two_line_autocomplete, parent, false)
+            finalView = inflater.inflate(R.layout.browser_two_line_autocomplete, parent, false)
 
             holder = SuggestionViewHolder(finalView)
             finalView.tag = holder

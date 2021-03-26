@@ -77,6 +77,7 @@ import android.widget.TextView.OnEditorActionListener
 import androidx.annotation.ColorInt
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -84,6 +85,7 @@ import androidx.fragment.app.Fragment
 import androidx.palette.graphics.Palette
 import com.afollestad.materialdialogs.MaterialDialog
 import com.anthonycr.grant.PermissionsManager
+import com.anthonycr.progress.AnimatedProgressBar
 import com.timecat.data.bmob.dao.UserDao
 import com.timecat.component.setting.DEF
 import com.timecat.data.room.RoomClient
@@ -93,10 +95,6 @@ import io.reactivex.Completable
 import io.reactivex.Scheduler
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.browser_activity_main.*
-import kotlinx.android.synthetic.main.browser_content.*
-import kotlinx.android.synthetic.main.search_interface.*
-import kotlinx.android.synthetic.main.toolbar.*
 import java.io.IOException
 import javax.inject.Inject
 
@@ -246,12 +244,40 @@ abstract class BrowserActivity : ThemableBrowserActivity(), BrowserView, UIContr
      * An observable which asynchronously updates the user's cookie preferences.
      */
     protected abstract fun updateCookiePreference(): Completable
-
+    private lateinit var coordinator_layout: CoordinatorLayout
+    private lateinit var drawer_layout: DrawerLayout
+    private lateinit var ui_layout: LinearLayout
+    private lateinit var toolbar_layout: LinearLayout
+    private lateinit var tabs_toolbar_container: FrameLayout
+    private lateinit var toolbar: androidx.appcompat.widget.Toolbar
+    private lateinit var progress_view: AnimatedProgressBar
+    private lateinit var content_frame: FrameLayout
+    private lateinit var search_bar: RelativeLayout
+    private lateinit var search_query: TextView
+    private lateinit var button_back: ImageButton
+    private lateinit var button_next: ImageButton
+    private lateinit var button_quit: ImageButton
+    private lateinit var left_drawer: FrameLayout
+    private lateinit var right_drawer: FrameLayout
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         injector.inject(this)
         setContentView(R.layout.browser_activity_main)
-
+        coordinator_layout = findViewById(R.id.coordinator_layout)
+        drawer_layout = findViewById(R.id.drawer_layout)
+        ui_layout = findViewById(R.id.ui_layout)
+        toolbar_layout = findViewById(R.id.toolbar_layout)
+        tabs_toolbar_container = findViewById(R.id.tabs_toolbar_container)
+        toolbar = findViewById(R.id.toolbar)
+        progress_view = findViewById(R.id.progress_view)
+        content_frame = findViewById(R.id.content_frame)
+        search_bar = findViewById(R.id.search_bar)
+        search_query = findViewById(R.id.search_query)
+        button_back = findViewById(R.id.button_back)
+        button_next = findViewById(R.id.button_next)
+        button_quit = findViewById(R.id.button_quit)
+        left_drawer = findViewById(R.id.left_drawer)
+        right_drawer = findViewById(R.id.right_drawer)
         val incognitoNotification = IncognitoNotification(this, notificationManager)
         tabsManager.addTabNumberChangedListener {
             if (isIncognito()) {
@@ -365,7 +391,7 @@ abstract class BrowserActivity : ThemableBrowserActivity(), BrowserView, UIContr
         actionBar.setDisplayShowTitleEnabled(false)
         actionBar.setDisplayShowHomeEnabled(false)
         actionBar.setDisplayShowCustomEnabled(true)
-        actionBar.setCustomView(R.layout.toolbar_content)
+        actionBar.setCustomView(R.layout.browser_toolbar_content)
 
         val customView = actionBar.customView
         customView.layoutParams = customView.layoutParams.apply {

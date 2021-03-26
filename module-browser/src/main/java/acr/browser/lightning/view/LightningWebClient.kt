@@ -158,7 +158,7 @@ class LightningWebClient(
     override fun onReceivedHttpAuthRequest(view: WebView, handler: HttpAuthHandler,
                                            host: String, realm: String) =
         AlertDialog.Builder(activity).apply {
-            val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_auth_request, null)
+            val dialogView = LayoutInflater.from(activity).inflate(R.layout.browser_dialog_auth_request, null)
 
             val realmLabel = dialogView.findViewById<TextView>(R.id.auth_request_realm_textview)
             val name = dialogView.findViewById<EditText>(R.id.auth_request_username_edittext)
@@ -213,7 +213,7 @@ class LightningWebClient(
         val alertMessage = activity.getString(R.string.message_insecure_connection, stringBuilder.toString())
 
         AlertDialog.Builder(activity).apply {
-            val view = LayoutInflater.from(activity).inflate(R.layout.dialog_ssl_warning, null)
+            val view = LayoutInflater.from(activity).inflate(R.layout.browser_dialog_ssl_warning, null)
             val dontAskAgain = view.findViewById<CheckBox>(R.id.checkBoxDontAskAgain)
             setTitle(activity.getString(R.string.title_warning))
             setMessage(alertMessage)

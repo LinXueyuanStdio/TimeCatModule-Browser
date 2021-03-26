@@ -200,7 +200,7 @@ class LightningChromeClient(
      * of a video's loading progress.
      */
     override fun getVideoLoadingProgressView(): View =
-        LayoutInflater.from(activity).inflate(R.layout.video_loading_progress, null)
+        LayoutInflater.from(activity).inflate(R.layout.browser_video_loading_progress, null)
 
     override fun onHideCustomView() = uiController.onHideCustomView()
 

@@ -146,7 +146,7 @@ class GeneralSettingsFragment : AbstractSettingsFragment() {
     }
 
     private fun showManualProxyPicker(activity: Activity, summaryUpdater: SummaryUpdater) {
-        val v = activity.layoutInflater.inflate(R.layout.dialog_manual_proxy, null)
+        val v = activity.layoutInflater.inflate(R.layout.browser_dialog_manual_proxy, null)
         val eProxyHost = v.findViewById<TextView>(R.id.proxyHost)
         val eProxyPort = v.findViewById<TextView>(R.id.proxyPort)
 
@@ -245,7 +245,7 @@ class GeneralSettingsFragment : AbstractSettingsFragment() {
 
     private fun showCustomDownloadLocationPicker(summaryUpdater: SummaryUpdater) {
         activity?.let { activity ->
-            val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_edit_text, null)
+            val dialogView = LayoutInflater.from(activity).inflate(R.layout.browser_dialog_edit_text, null)
             val getDownload = dialogView.findViewById<EditText>(R.id.dialog_edit_text)
 
             val errorColor = ContextCompat.getColor(activity

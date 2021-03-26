@@ -19,7 +19,7 @@ class RecyclerViewStringAdapter<T>(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SimpleStringViewHolder =
         SimpleStringViewHolder(
-            parent.context.inflater.inflate(R.layout.simple_list_item, parent, false)
+            parent.context.inflater.inflate(R.layout.browser_simple_list_item, parent, false)
         )
 
     override fun getItemCount(): Int = listItems.size

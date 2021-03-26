@@ -1,12 +1,7 @@
 package com.timecat.module.browser
 
-import acr.browser.lightning.IncognitoActivity
 import acr.browser.lightning.R
-import acr.browser.lightning.browser.activity.BrowserActivity
-import android.content.Intent
 import android.os.Build
-import android.view.KeyEvent
-import android.view.Menu
 import android.webkit.CookieManager
 import android.webkit.CookieSyncManager
 import com.timecat.identity.readonly.RouterHub
@@ -32,7 +27,7 @@ class BrowserFragment : AbsBrowserFragment() {
         cookieManager.setAcceptCookie(userPreferences.cookiesEnabled)
     }
 
-    override fun menu(): Int =R.menu.main
+    override fun menu(): Int = R.menu.main
 
     override fun onPause() {
         super.onPause()

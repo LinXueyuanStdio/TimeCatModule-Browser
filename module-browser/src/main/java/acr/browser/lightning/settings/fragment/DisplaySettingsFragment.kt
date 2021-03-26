@@ -97,7 +97,7 @@ class DisplaySettingsFragment : AbstractSettingsFragment() {
         val maxValue = 5
         val dialog = AlertDialog.Builder(activity).apply {
             val layoutInflater = activity.layoutInflater
-            val customView = (layoutInflater.inflate(R.layout.dialog_seek_bar, null) as LinearLayout).apply {
+            val customView = (layoutInflater.inflate(R.layout.browser_dialog_seek_bar, null) as LinearLayout).apply {
                 val text = TextView(activity).apply {
                     setText(R.string.untitled)
                     layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)

@@ -99,7 +99,7 @@ public class ReadingActivity extends AppCompatActivity {
             getWindow().setBackgroundDrawable(new ColorDrawable(color));
         }
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.reading_view);
+        setContentView(R.layout.browser_reading_view);
         findView();
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -309,7 +309,7 @@ public class ReadingActivity extends AppCompatActivity {
             finish();
 
         } else if (i == R.id.text_size_item) {
-            View view = LayoutInflater.from(this).inflate(R.layout.dialog_seek_bar, null);
+            View view = LayoutInflater.from(this).inflate(R.layout.browser_dialog_seek_bar, null);
             final SeekBar bar = view.findViewById(R.id.text_size_seekbar);
             bar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 
