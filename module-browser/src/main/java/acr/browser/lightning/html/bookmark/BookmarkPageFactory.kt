@@ -153,8 +153,8 @@ class BookmarkPageFactory @Inject constructor(
 
         const val FILENAME = "bookmarks.html"
 
-        private const val FOLDER_ICON = "folder.png"
-        private const val DEFAULT_ICON = "default.png"
+        const val FOLDER_ICON = "folder.png"
+        const val DEFAULT_ICON = "default.png"
 
     }
 }
