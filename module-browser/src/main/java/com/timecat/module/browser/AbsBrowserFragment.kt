@@ -348,6 +348,8 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         injector.inject(this)
     }
 
+    fun context():Context=_mActivity
+
     private fun initialize() {
         registerKeyEvent()
         initializeToolbarHeight(resources.configuration)
@@ -359,17 +361,17 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
 
         //TODO make sure dark theme flag gets set correctly
         isDarkTheme = userPreferences.useTheme != 0 || isIncognito()
-        iconColor = ThemeUtils.getIconThemeColor(_mActivity, isDarkTheme)
+        iconColor = ThemeUtils.getIconThemeColor(context(), isDarkTheme)
         disabledIconColor = if (isDarkTheme) {
-            ContextCompat.getColor(_mActivity, R.color.icon_dark_theme_disabled)
+            ContextCompat.getColor(context(), R.color.icon_dark_theme_disabled)
         } else {
-            ContextCompat.getColor(_mActivity, R.color.icon_light_theme_disabled)
+            ContextCompat.getColor(context(), R.color.icon_light_theme_disabled)
         }
         shouldShowTabsInDrawer = userPreferences.showTabsInDrawer
         swapBookmarksAndTabs = userPreferences.bookmarksAndTabsSwapped
 
         // initialize background ColorDrawable
-        val primaryColor = ThemeUtils.getPrimaryColor(_mActivity)
+        val primaryColor = ThemeUtils.getPrimaryColor(context())
         backgroundDrawable.color = primaryColor
 
         // Drawer stutters otherwise
@@ -397,7 +399,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         setNavigationDrawerWidth()
         drawer_layout.addDrawerListener(DrawerLocker())
 
-        webPageBitmap = ThemeUtils.getThemedBitmap(_mActivity, R.drawable.ic_webpage, isDarkTheme)
+        webPageBitmap = ThemeUtils.getThemedBitmap(context(), R.drawable.ic_webpage, isDarkTheme)
 
         val fragmentManager = childFragmentManager
 
@@ -430,7 +432,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         }
 
         // set display options of the ActionBar
-        val inflater = LayoutInflater.from(_mActivity)
+        val inflater = LayoutInflater.from(context())
         val customView = inflater.inflate(R.layout.browser_toolbar_content, actionBar, false)
         actionBar.addView(customView)
 
@@ -468,14 +470,14 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         customView.findViewById<FrameLayout>(R.id.arrow_button).setOnClickListener(this)
 
         val iconBounds = Utils.dpToPx(24f)
-        backgroundColor = ThemeUtils.getPrimaryColor(_mActivity)
-        deleteIconDrawable = ThemeUtils.getThemedDrawable(_mActivity, R.drawable.ic_delete_24dp, isDarkTheme).apply {
+        backgroundColor = ThemeUtils.getPrimaryColor(context())
+        deleteIconDrawable = ThemeUtils.getThemedDrawable(context(), R.drawable.ic_delete_24dp, isDarkTheme).apply {
             setBounds(0, 0, iconBounds, iconBounds)
         }
-        refreshIconDrawable = ThemeUtils.getThemedDrawable(_mActivity, R.drawable.ic_refresh_24dp, isDarkTheme).apply {
+        refreshIconDrawable = ThemeUtils.getThemedDrawable(context(), R.drawable.ic_refresh_24dp, isDarkTheme).apply {
             setBounds(0, 0, iconBounds, iconBounds)
         }
-        clearIconDrawable = ThemeUtils.getThemedDrawable(_mActivity, R.drawable.ic_clear_24dp, isDarkTheme).apply {
+        clearIconDrawable = ThemeUtils.getThemedDrawable(context(), R.drawable.ic_clear_24dp, isDarkTheme).apply {
             setBounds(0, 0, iconBounds, iconBounds)
         }
 
@@ -877,7 +879,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
     }
 
     private fun toast(msg: String) {
-        Toast.makeText(_mActivity, msg, Toast.LENGTH_LONG).show()
+        Toast.makeText(context(), msg, Toast.LENGTH_LONG).show()
     }
 
     // 是否第一次收藏网址
@@ -1013,13 +1015,13 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
             is SSLState.None -> null
             is SSLState.Valid -> {
                 val bitmap =
-                    DrawableUtils.getImageInsetInRoundedSquare(_mActivity, R.drawable.ic_secured, R.color.ssl_secured)
+                    DrawableUtils.getImageInsetInRoundedSquare(context(), R.drawable.ic_secured, R.color.ssl_secured)
                 val securedDrawable = BitmapDrawable(resources, bitmap)
                 securedDrawable
             }
             is SSLState.Invalid -> {
                 val bitmap =
-                    DrawableUtils.getImageInsetInRoundedSquare(_mActivity, R.drawable.ic_unsecured, R.color.ssl_unsecured)
+                    DrawableUtils.getImageInsetInRoundedSquare(context(), R.drawable.ic_unsecured, R.color.ssl_unsecured)
                 val unsecuredDrawable = BitmapDrawable(resources, bitmap)
                 unsecuredDrawable
             }
@@ -1174,11 +1176,11 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
             logger.log(TAG, "Cache Cleared")
         }
         if (userPreferences.clearHistoryExitEnabled && !isIncognito()) {
-            WebUtils.clearHistory(_mActivity, historyModel, databaseScheduler)
+            WebUtils.clearHistory(context(), historyModel, databaseScheduler)
             logger.log(TAG, "History Cleared")
         }
         if (userPreferences.clearCookiesExitEnabled && !isIncognito()) {
-            WebUtils.clearCookies(_mActivity)
+            WebUtils.clearCookies(context())
             logger.log(TAG, "Cookies Cleared")
         }
         if (userPreferences.clearWebStorageExitEnabled && !isIncognito()) {
@@ -1354,7 +1356,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
      * @param tabBackground the optional LinearLayout to color
      */
     override fun changeToolbarBackground(favicon: Bitmap, tabBackground: Drawable?) {
-        val defaultColor = ContextCompat.getColor(_mActivity, R.color.primary_color)
+        val defaultColor = ContextCompat.getColor(context(), R.color.primary_color)
         if (currentUiColor == Color.BLACK) {
             currentUiColor = defaultColor
         }
@@ -1427,12 +1429,12 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
     override fun updateTabNumber(number: Int) {
         if (shouldShowTabsInDrawer) {
             if (isIncognito()) {
-                arrowImageView?.setImageDrawable(ThemeUtils.getThemedDrawable(_mActivity, R.drawable.incognito_mode, true))
+                arrowImageView?.setImageDrawable(ThemeUtils.getThemedDrawable(context(), R.drawable.incognito_mode, true))
             } else {
                 arrowImageView?.setImageBitmap(
                     DrawableUtils.getRoundedNumberImage(
                         number, Utils.dpToPx(24f),
-                        Utils.dpToPx(24f), ThemeUtils.getIconThemeColor(_mActivity, isDarkTheme), Utils.dpToPx(2.5f)
+                        Utils.dpToPx(24f), ThemeUtils.getIconThemeColor(context(), isDarkTheme), Utils.dpToPx(2.5f)
                     )
                 )
             }
@@ -1460,7 +1462,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
      */
     private fun initializeSearchSuggestions(getUrl: AutoCompleteTextView) {
 
-        suggestionsAdapter = SuggestionsAdapter(_mActivity, isDarkTheme, isIncognito())
+        suggestionsAdapter = SuggestionsAdapter(context(), isDarkTheme, isIncognito())
 
         getUrl.threshold = 1
         getUrl.dropDownWidth = -1
@@ -1677,8 +1679,8 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         _mActivity.setRequestedOrientation(requestedOrientation)
         val decorView = v as ViewGroup
 
-        fullscreenContainerView = FrameLayout(_mActivity)
-        fullscreenContainerView?.setBackgroundColor(ContextCompat.getColor(_mActivity, R.color.black))
+        fullscreenContainerView = FrameLayout(context())
+        fullscreenContainerView?.setBackgroundColor(ContextCompat.getColor(context(), R.color.black))
         if (view is FrameLayout) {
             val child = view.focusedChild
             if (child is VideoView) {
@@ -1919,7 +1921,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
             LightningDialogBuilder.NewTab.BACKGROUND -> presenter?.newTab(urlInitializer, false)
             LightningDialogBuilder.NewTab.INCOGNITO -> {
                 drawer_layout.closeDrawers()
-                val intent = IncognitoActivity.createIntent(_mActivity, Uri.parse(url))
+                val intent = IncognitoActivity.createIntent(context(), Uri.parse(url))
                 startActivity(intent)
             }
         }
@@ -2060,7 +2062,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                 return true
             }
             R.id.action_incognito -> {
-                startActivity(IncognitoActivity.createIntent(_mActivity))
+                startActivity(IncognitoActivity.createIntent(context()))
                 return true
             }
             R.id.action_share -> {
@@ -2079,7 +2081,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                 return true
             }
             R.id.action_settings -> {
-                startActivity(Intent(_mActivity, SettingsActivity::class.java))
+                startActivity(Intent(context(), SettingsActivity::class.java))
                 return true
             }
             R.id.action_history -> {
@@ -2102,7 +2104,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
             }
             R.id.action_reading_mode -> {
                 if (currentUrl != null) {
-                    val read = Intent(_mActivity, ReadingActivity::class.java)
+                    val read = Intent(context(), ReadingActivity::class.java)
                     read.putExtra(LOAD_READING_URL, currentUrl)
                     startActivity(read)
                 }
