@@ -51,7 +51,6 @@ import android.graphics.drawable.Drawable
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
-import android.os.Bundle
 import android.os.Handler
 import android.os.Message
 import android.provider.MediaStore
@@ -103,6 +102,7 @@ import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import java.io.IOException
 import javax.inject.Inject
+
 /**
  * @author 林学渊
  * @email linxy59@mail2.sysu.edu.cn
@@ -110,48 +110,7 @@ import javax.inject.Inject
  * @description null
  * @usage null
  */
-abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController, OnClickListener, Toolbar.OnMenuItemClickListener  {
-
-    override fun createView(context: Context): View {
-        val origin = context
-        val contextThemeWrapper: Context = ContextThemeWrapper(origin, theme())
-        val themeAwareInflater = LayoutInflater.from(origin).cloneInContext(contextThemeWrapper)
-        v = themeAwareInflater.inflate(layout(), null, false)
-        bindView(v)
-        return v
-    }
-
-    open fun theme(): Int = R.style.Theme_LightTheme
-    abstract fun menu(): Int
-
-    fun lazyInit(context: Context) {
-        val incognitoNotification = IncognitoNotification(context, notificationManager)
-        tabsManager.addTabNumberChangedListener {
-            if (isIncognito()) {
-                if (it == 0) {
-                    incognitoNotification.hide()
-                } else {
-                    incognitoNotification.show(it)
-                }
-            }
-        }
-
-        presenter = BrowserPresenter(
-            context,
-            this,
-            this,
-            isIncognito(),
-            userPreferences,
-            tabsManager,
-            mainScheduler,
-            homePageFactory,
-            bookmarkPageFactory,
-            RecentTabModel(),
-            logger
-        )
-
-        initialize(context)
-    }
+abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController, OnClickListener, Toolbar.OnMenuItemClickListener {
 
     //region field
     // Toolbar Views
@@ -183,7 +142,6 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
     private var shouldShowTabsInDrawer: Boolean = false
     private var swapBookmarksAndTabs: Boolean = false
 
-    private var originalOrientation: Int = 0
     private var backgroundColor: Int = 0
     private var iconColor: Int = 0
     private var disabledIconColor: Int = 0
@@ -277,6 +235,14 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
     }
     //endregion
 
+    init {
+        injector.inject(this)
+    }
+
+    open fun theme(): Int = R.style.Theme_LightTheme
+
+    abstract fun menu(): Int
+
     /**
      * Determines if the current browser instance is in incognito mode or not.
      */
@@ -300,6 +266,7 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
      */
     protected abstract fun updateCookiePreference(): Completable
 
+    //region view
     lateinit var v: View
 
     private lateinit var coordinator_layout: CoordinatorLayout
@@ -317,6 +284,45 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
     private lateinit var button_quit: ImageButton
     private lateinit var left_drawer: FrameLayout
     private lateinit var right_drawer: FrameLayout
+
+    override fun createView(context: Context): View {
+        val origin = context
+        val contextThemeWrapper: Context = ContextThemeWrapper(origin, theme())
+        val themeAwareInflater = LayoutInflater.from(origin).cloneInContext(contextThemeWrapper)
+        v = themeAwareInflater.inflate(layout(), null, false)
+        bindView(v)
+        lazyInit(context)
+        return v
+    }
+
+    fun lazyInit(context: Context) {
+        val incognitoNotification = IncognitoNotification(context, notificationManager)
+        tabsManager.addTabNumberChangedListener {
+            if (isIncognito()) {
+                if (it == 0) {
+                    incognitoNotification.hide()
+                } else {
+                    incognitoNotification.show(it)
+                }
+            }
+        }
+
+        presenter = BrowserPresenter(
+            context,
+            this,
+            this,
+            isIncognito(),
+            userPreferences,
+            tabsManager,
+            mainScheduler,
+            homePageFactory,
+            bookmarkPageFactory,
+            RecentTabModel(),
+            logger
+        )
+
+        initialize(context)
+    }
 
     @LayoutRes
     protected fun layout(): Int = R.layout.browser_activity_main
@@ -338,13 +344,6 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
         left_drawer = view.findViewById(R.id.left_drawer)
         right_drawer = view.findViewById(R.id.right_drawer)
     }
-
-    init {
-        injector.inject(this)
-        lazyInit()
-    }
-
-    fun context(): Context = _mActivity
 
     private fun initialize(context: Context) {
         registerKeyEvent()
@@ -525,6 +524,9 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
             proxyUtils.checkForProxy(context())
         }
     }
+    //endregion
+
+    fun context(): Context = _mActivity
 
     private fun registerKeyEvent() {
         v.setOnKeyListener { v, keyCode, event ->
@@ -706,7 +708,7 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
 
     }
 
-    private fun setNavigationDrawerWidth(context:Context) {
+    private fun setNavigationDrawerWidth(context: Context) {
         val width = context.resources.displayMetrics.widthPixels - Utils.dpToPx(56f)
         val maxWidth = if (context.isTablet) {
             Utils.dpToPx(320f)
@@ -877,6 +879,7 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
     private fun toast(msg: String) {
         ToastUtil.i_long(msg)
     }
+
     private fun toast(@StringRes msgRes: Int) {
         ToastUtil.i_long(msgRes)
     }
@@ -1234,7 +1237,7 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
         }
     }
 
-    override fun onBackPressedSupport(): Boolean {
+    override fun onBackPressed(): Boolean {
         logger.log(TAG, "onBackPressed")
         Log.e(TAG, "onBackPressed")
         val currentTab = tabsManager.currentTab
@@ -1265,7 +1268,7 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
                 }
             } else {
                 logger.log(TAG, "This shouldn't happen ever")
-                return super.onBackPressedSupport()
+                return super.onBackPressed()
             }
         }
         return true
@@ -1283,24 +1286,20 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-        proxyUtils.onStop()
+    override fun onFragmentCreate(): Boolean {
+        proxyUtils.onStart(context())
+        return super.onFragmentCreate()
     }
 
-    override fun onDestroy() {
+    override fun onFragmentDestroy() {
+        proxyUtils.onStop()
         logger.log(TAG, "onDestroy")
 
         mainHandler.removeCallbacksAndMessages(null)
 
         presenter?.shutdown()
 
-        super.onDestroy()
-    }
-
-    override fun onStart() {
-        super.onStart()
-        proxyUtils.onStart(_mActivity)
+        super.onFragmentDestroy()
     }
 
     override fun onResume() {
@@ -1648,13 +1647,11 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
         }, FILE_CHOOSER_REQUEST_CODE)
     }
 
-    override fun onShowCustomView(view: View, callback: CustomViewCallback) {
-        originalOrientation = _mActivity.requestedOrientation
-        val requestedOrientation = originalOrientation
-        onShowCustomView(view, callback, requestedOrientation)
+    override fun onShowCustomView(view: View, callback: CustomViewCallback, requestedOrientation: Int) {
+        onShowCustomView(view, callback)
     }
 
-    override fun onShowCustomView(view: View, callback: CustomViewCallback, requestedOrientation: Int) {
+    override fun onShowCustomView(view: View, callback: CustomViewCallback) {
         val currentTab = tabsManager.currentTab
         if (customView != null) {
             try {
@@ -1672,11 +1669,9 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
             logger.log(TAG, "WebView is not allowed to keep the screen on")
         }
 
-        originalOrientation = _mActivity.getRequestedOrientation()
         customViewCallback = callback
         customView = view
 
-        _mActivity.setRequestedOrientation(requestedOrientation)
         val decorView = v as ViewGroup
 
         fullscreenContainerView = FrameLayout(context())
@@ -1745,7 +1740,6 @@ abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController,
         }
 
         customViewCallback = null
-        _mActivity.requestedOrientation = originalOrientation
     }
 
     private inner class VideoCompletionListener : MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
