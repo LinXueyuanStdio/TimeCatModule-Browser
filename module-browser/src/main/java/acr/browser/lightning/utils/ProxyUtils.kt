@@ -168,12 +168,22 @@ class ProxyUtils @Inject constructor() {
         sI2PHelperBound = false
     }
 
-    fun onStart(activity: Activity?) {
+    fun onStart(context: Context) {
         if (mUserPreferences!!.proxyChoice == PROXY_I2P) {
             // Try to bind to I2P Android
             mI2PHelper!!.bind {
                 sI2PHelperBound = true
-                if (sI2PProxyInitialized && !mI2PHelper!!.isI2PAndroidRunning) mI2PHelper!!.requestI2PAndroidStart(activity)
+                if (sI2PProxyInitialized && !mI2PHelper!!.isI2PAndroidRunning) {
+                    MaterialDialog(context).show {
+                        title(R.string.start_i2p_android)
+                        message(R.string.would_you_like_to_start_i2p_android)
+                        positiveButton(R.string.yes) {
+                            val i = Intent("net.i2p.android.router.START_I2P")
+                            context.startActivity(i)
+                        }
+                        negativeButton(R.string.no)
+                    }
+                }
             }
         }
     }
