@@ -37,15 +37,15 @@ object BrowserDialog {
 
     @JvmStatic
     fun show(
-        activity: Activity,
+        context: Context,
         @StringRes title: Int,
         vararg items: DialogItem
-    ) = show(activity, activity.getString(title), *items)
+    ) = show(context, context.getString(title), *items)
     
-    fun showWithIcons(activity: Activity, title: String?, vararg items: DialogItem) {
-        val builder = AlertDialog.Builder(activity)
+    fun showWithIcons(context: Context, title: String?, vararg items: DialogItem) {
+        val builder = AlertDialog.Builder(context)
 
-        val layout = activity.inflater.inflate(R.layout.browser_list_dialog, null)
+        val layout = context.inflater.inflate(R.layout.browser_list_dialog, null)
 
         val titleView = layout.findViewById<TextView>(R.id.dialog_title)
         val recyclerView = layout.findViewById<RecyclerView>(R.id.dialog_list)
@@ -68,7 +68,7 @@ object BrowserDialog {
 
         val dialog = builder.show()
 
-        setDialogSize(activity, dialog)
+        setDialogSize(context, dialog)
 
         adapter.onItemClickListener = { item ->
             item.onClick()
@@ -77,17 +77,17 @@ object BrowserDialog {
     }
 
     @JvmStatic
-    fun show(activity: Activity, title: String?, vararg items: DialogItem) {
-        val builder = AlertDialog.Builder(activity)
+    fun show(context: Context, title: String?, vararg items: DialogItem) {
+        val builder = AlertDialog.Builder(context)
 
-        val layout = activity.inflater.inflate(R.layout.browser_list_dialog, null)
+        val layout = context.inflater.inflate(R.layout.browser_list_dialog, null)
 
         val titleView = layout.findViewById<TextView>(R.id.dialog_title)
         val recyclerView = layout.findViewById<RecyclerView>(R.id.dialog_list)
 
         val itemList = items.filter(DialogItem::isConditionMet)
 
-        val adapter = RecyclerViewStringAdapter(itemList, convertToString = { activity.getString(this.title) })
+        val adapter = RecyclerViewStringAdapter(itemList, convertToString = { context.getString(this.title) })
 
         if (title?.isNotEmpty() == true) {
             titleView.text = title
@@ -103,7 +103,7 @@ object BrowserDialog {
 
         val dialog = builder.show()
 
-        setDialogSize(activity, dialog)
+        setDialogSize(context, dialog)
 
         adapter.onItemClickListener = { item ->
             item.onClick()
@@ -113,7 +113,7 @@ object BrowserDialog {
 
     @JvmStatic
     fun showPositiveNegativeDialog(
-        activity: Activity,
+        context: Context,
         @StringRes title: Int,
         @StringRes message: Int,
         messageArguments: Array<Any>? = null,
@@ -122,11 +122,11 @@ object BrowserDialog {
         onCancel: () -> Unit
     ) {
         val messageValue = if (messageArguments != null) {
-            activity.getString(message, *messageArguments)
+            context.getString(message, *messageArguments)
         } else {
-            activity.getString(message)
+            context.getString(message)
         }
-        val dialog = AlertDialog.Builder(activity).apply {
+        val dialog = AlertDialog.Builder(context).apply {
             setTitle(title)
             setMessage(messageValue)
             setOnCancelListener { onCancel() }
@@ -134,28 +134,28 @@ object BrowserDialog {
             setNegativeButton(negativeButton.title) { _, _ -> negativeButton.onClick() }
         }.show()
 
-        setDialogSize(activity, dialog)
+        setDialogSize(context, dialog)
     }
 
     @JvmStatic
     fun showEditText(
-        activity: Activity,
+        context: Context,
         @StringRes title: Int,
         @StringRes hint: Int,
         @StringRes action: Int,
         textInputListener: (String) -> Unit
-    ) = showEditText(activity, title, hint, null, action, textInputListener)
+    ) = showEditText(context, title, hint, null, action, textInputListener)
 
     @JvmStatic
     fun showEditText(
-        activity: Activity,
+        context: Context,
         @StringRes title: Int,
         @StringRes hint: Int,
         currentText: String?,
         @StringRes action: Int,
         textInputListener: (String) -> Unit
     ) {
-        val dialogView = LayoutInflater.from(activity).inflate(R.layout.browser_dialog_edit_text, null)
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.browser_dialog_edit_text, null)
         val editText = dialogView.findViewById<EditText>(R.id.dialog_edit_text)
 
         editText.setHint(hint)
@@ -163,14 +163,14 @@ object BrowserDialog {
             editText.setText(currentText)
         }
 
-        val editorDialog = AlertDialog.Builder(activity)
+        val editorDialog = AlertDialog.Builder(context)
             .setTitle(title)
             .setView(dialogView)
             .setPositiveButton(action
             ) { _, _ -> textInputListener(editText.text.toString()) }
 
         val dialog = editorDialog.show()
-        setDialogSize(activity, dialog)
+        setDialogSize(context, dialog)
     }
 
     @JvmStatic
@@ -188,9 +188,9 @@ object BrowserDialog {
     /**
      * Show the custom dialog with the custom builder arguments applied.
      */
-    fun showCustomDialog(activity: Activity?, block: AlertDialog.Builder.(Activity) -> Unit) {
-        activity?.let {
-            AlertDialog.Builder(activity).apply {
+    fun showCustomDialog(context: Context?, block: AlertDialog.Builder.(Context) -> Unit) {
+        context?.let {
+            AlertDialog.Builder(context).apply {
                 block(it)
                 val dialog = show()
                 setDialogSize(it, dialog)

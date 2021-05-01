@@ -21,7 +21,6 @@ import acr.browser.lightning.utils.UrlUtils
 import acr.browser.lightning.utils.Utils
 import acr.browser.lightning.view.find.FindResults
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.*
@@ -50,7 +49,7 @@ import javax.inject.Inject
  * class.
  */
 class LightningView(
-    private val activity: Activity,
+    private val context: Context,
     tabInitializer: TabInitializer,
     val isIncognito: Boolean,
     private val homePageInitializer: HomePageInitializer,
@@ -182,15 +181,15 @@ class LightningView(
         else context
     }
     init {
-        activity.injector.inject(this)
+        context.injector.inject(this)
 
-        titleInfo = LightningViewTitle(activity)
+        titleInfo = LightningViewTitle(context)
 
-        maxFling = ViewConfiguration.get(activity).scaledMaximumFlingVelocity.toFloat()
-        lightningWebClient = LightningWebClient(activity, this, uiController)
-        gestureDetector = GestureDetector(activity, CustomGestureListener())
+        maxFling = ViewConfiguration.get(context).scaledMaximumFlingVelocity.toFloat()
+        lightningWebClient = LightningWebClient(context, this, uiController)
+        gestureDetector = GestureDetector(context, CustomGestureListener())
 
-        val tab = WebView(getFixedContext(activity)).also { webView = it }.apply {
+        val tab = WebView(getFixedContext(context)).also { webView = it }.apply {
             id = View.generateViewId()
 
             drawingCacheBackgroundColor = Color.WHITE
@@ -207,10 +206,10 @@ class LightningView(
             isScrollbarFadingEnabled = true
             isSaveEnabled = true
             setNetworkAvailable(true)
-            webChromeClient = LightningChromeClient(activity, this@LightningView, uiController)
+            webChromeClient = LightningChromeClient(context, this@LightningView, uiController)
             webViewClient = lightningWebClient
 
-            setDownloadListener(LightningDownloadListener(activity))
+            setDownloadListener(LightningDownloadListener(context))
             setOnTouchListener(TouchListener())
             initializeSettings()
         }
@@ -392,7 +391,7 @@ class LightningView(
     }
 
     private fun getPathObservable(subFolder: String) = Single.fromCallable {
-        activity.getDir(subFolder, 0)
+        context.getDir(subFolder, 0)
     }
 
     /**
@@ -424,7 +423,7 @@ class LightningView(
         val settings = webView?.settings ?: return
 
         when (choice) {
-            1 -> settings.userAgentString = WebSettings.getDefaultUserAgent(activity)
+            1 -> settings.userAgentString = WebSettings.getDefaultUserAgent(context)
             2 -> settings.userAgentString = DESKTOP_USER_AGENT
             3 -> settings.userAgentString = MOBILE_USER_AGENT
             4 -> {
@@ -603,7 +602,7 @@ class LightningView(
      */
     fun reload() {
         // Check if configured proxy is available
-        if (!proxyUtils.isProxyReady(activity)) {
+        if (!proxyUtils.isProxyReady()) {
             // User has been notified
             return
         }
@@ -710,39 +709,39 @@ class LightningView(
         if (currentUrl != null && UrlUtils.isSpecialUrl(currentUrl)) {
             if (UrlUtils.isHistoryUrl(currentUrl)) {
                 if (url != null) {
-                    dialogBuilder.showLongPressedHistoryLinkDialog(activity, uiController, url)
+                    dialogBuilder.showLongPressedHistoryLinkDialog(context, uiController, url)
                 } else if (newUrl != null) {
-                    dialogBuilder.showLongPressedHistoryLinkDialog(activity, uiController, newUrl)
+                    dialogBuilder.showLongPressedHistoryLinkDialog(context, uiController, newUrl)
                 }
             } else if (UrlUtils.isBookmarkUrl(currentUrl)) {
                 if (url != null) {
-                    dialogBuilder.showLongPressedDialogForBookmarkUrl(activity, uiController, url)
+                    dialogBuilder.showLongPressedDialogForBookmarkUrl(context, uiController, url)
                 } else if (newUrl != null) {
-                    dialogBuilder.showLongPressedDialogForBookmarkUrl(activity, uiController, newUrl)
+                    dialogBuilder.showLongPressedDialogForBookmarkUrl(context, uiController, newUrl)
                 }
             } else if (UrlUtils.isDownloadsUrl(currentUrl)) {
                 if (url != null) {
-                    dialogBuilder.showLongPressedDialogForDownloadUrl(activity, uiController, url)
+                    dialogBuilder.showLongPressedDialogForDownloadUrl(context, uiController, url)
                 } else if (newUrl != null) {
-                    dialogBuilder.showLongPressedDialogForDownloadUrl(activity, uiController, newUrl)
+                    dialogBuilder.showLongPressedDialogForDownloadUrl(context, uiController, newUrl)
                 }
             }
         } else {
             if (url != null) {
                 if (result != null) {
                     if (result.type == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE || result.type == WebView.HitTestResult.IMAGE_TYPE) {
-                        dialogBuilder.showLongPressImageDialog(activity, uiController, url, userAgent)
+                        dialogBuilder.showLongPressImageDialog(context, uiController, url, userAgent)
                     } else {
-                        dialogBuilder.showLongPressLinkDialog(activity, uiController, url)
+                        dialogBuilder.showLongPressLinkDialog(context, uiController, url)
                     }
                 } else {
-                    dialogBuilder.showLongPressLinkDialog(activity, uiController, url)
+                    dialogBuilder.showLongPressLinkDialog(context, uiController, url)
                 }
             } else if (newUrl != null) {
                 if (result.type == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE || result.type == WebView.HitTestResult.IMAGE_TYPE) {
-                    dialogBuilder.showLongPressImageDialog(activity, uiController, newUrl, userAgent)
+                    dialogBuilder.showLongPressImageDialog(context, uiController, newUrl, userAgent)
                 } else {
-                    dialogBuilder.showLongPressLinkDialog(activity, uiController, newUrl)
+                    dialogBuilder.showLongPressLinkDialog(context, uiController, newUrl)
                 }
             }
         }
@@ -775,7 +774,7 @@ class LightningView(
      */
     fun loadUrl(url: String) {
         // Check if configured proxy is available
-        if (!proxyUtils.isProxyReady(activity)) {
+        if (!proxyUtils.isProxyReady()) {
             return
         }
 

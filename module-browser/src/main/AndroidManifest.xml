@@ -169,6 +169,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity android:name=".settings.AdvancedSettingsActivity" />
+        <activity android:name=".settings.DisplaySettingsActivity" />
+        <activity android:name=".settings.BookmarkSettingsActivity" />
+        <activity android:name=".settings.PrivacySettingsActivity" />
+        <activity android:name=".settings.GeneralSettingsActivity" />
+        <activity android:name=".settings.SettingsActivity" />
     </application>
 
 </manifest>

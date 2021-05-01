@@ -6,14 +6,13 @@ import acr.browser.lightning.di.DiskScheduler
 import acr.browser.lightning.di.injector
 import acr.browser.lightning.dialog.BrowserDialog
 import acr.browser.lightning.dialog.DialogItem
-import acr.browser.lightning.extensions.resizeAndShow
 import acr.browser.lightning.favicon.FaviconModel
 import acr.browser.lightning.preference.UserPreferences
 import acr.browser.lightning.view.webrtc.WebRtcPermissionsModel
 import acr.browser.lightning.view.webrtc.WebRtcPermissionsView
 import android.Manifest
 import android.annotation.TargetApi
-import android.app.Activity
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -22,26 +21,38 @@ import android.os.Message
 import android.view.LayoutInflater
 import android.view.View
 import android.webkit.*
-import androidx.appcompat.app.AlertDialog
-import com.anthonycr.grant.PermissionsManager
-import com.anthonycr.grant.PermissionsResultAction
+import com.afollestad.materialdialogs.MaterialDialog
+import com.blankj.utilcode.constant.PermissionConstants
+import com.blankj.utilcode.util.PermissionUtils
 import io.reactivex.Scheduler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class LightningChromeClient(
-    private val activity: Activity,
+    private val context: Context,
     private val lightningView: LightningView,
     private val uiController: UIController
 ) : WebChromeClient(), WebRtcPermissionsView {
 
     private val geoLocationPermissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-    @Inject internal lateinit var faviconModel: FaviconModel
-    @Inject internal lateinit var userPreferences: UserPreferences
-    @Inject internal lateinit var webRtcPermissionsModel: WebRtcPermissionsModel
-    @Inject @field:DiskScheduler internal lateinit var diskScheduler: Scheduler
+
+    @Inject
+    internal lateinit var faviconModel: FaviconModel
+
+    @Inject
+    internal lateinit var userPreferences: UserPreferences
+
+    @Inject
+    internal lateinit var webRtcPermissionsModel: WebRtcPermissionsModel
+
+    @Inject
+    @field:DiskScheduler
+    internal lateinit var diskScheduler: Scheduler
 
     init {
-        activity.injector.inject(this)
+        context.injector.inject(this)
     }
 
     override fun onProgressChanged(view: WebView, newProgress: Int) {
@@ -76,7 +87,7 @@ class LightningChromeClient(
         if (title != null && !title.isEmpty()) {
             lightningView.titleInfo.setTitle(title)
         } else {
-            lightningView.titleInfo.setTitle(activity.getString(R.string.untitled))
+            lightningView.titleInfo.setTitle(context.getString(R.string.untitled))
         }
         uiController.tabChanged(lightningView)
         if (view != null && view.url != null) {
@@ -85,31 +96,33 @@ class LightningChromeClient(
     }
 
     override fun requestPermissions(permissions: Set<String>, onGrant: (Boolean) -> Unit) {
-        val missingPermissions = permissions
-            .filter { PermissionsManager.getInstance().hasPermission(activity, it) }
+        val missingPermissions = permissions.filter { PermissionUtils.isGranted(it) }
 
         if (missingPermissions.isEmpty()) {
             onGrant(true)
         } else {
-            PermissionsManager.getInstance().requestPermissionsIfNecessaryForResult(
-                activity,
-                missingPermissions.toTypedArray(),
-                object : PermissionsResultAction() {
-                    override fun onGranted() = onGrant(true)
+            PermissionUtils.permission(*missingPermissions.toTypedArray())
+                .callback(object :PermissionUtils.SimpleCallback{
+                    override fun onGranted() {
+                        onGrant(true)
+                    }
 
-                    override fun onDenied(permission: String?) = onGrant(false)
-                }
-            )
+                    override fun onDenied() {
+                        onGrant(false)
+                    }
+
+                })
+                .request()
         }
     }
 
     override fun requestResources(source: String,
                                   resources: Array<String>,
                                   onGrant: (Boolean) -> Unit) {
-        activity.runOnUiThread {
+        GlobalScope.launch(Dispatchers.Main) {
             val resourcesString = resources.joinToString(separator = "\n")
             BrowserDialog.showPositiveNegativeDialog(
-                activity = activity,
+                context = context,
                 title = R.string.title_permission_request,
                 message = R.string.message_permission_request,
                 messageArguments = arrayOf(source, resourcesString),
@@ -130,31 +143,34 @@ class LightningChromeClient(
     }
 
     override fun onGeolocationPermissionsShowPrompt(origin: String,
-                                                    callback: GeolocationPermissions.Callback) =
-        PermissionsManager.getInstance().requestPermissionsIfNecessaryForResult(activity, geoLocationPermissions, object : PermissionsResultAction() {
-            override fun onGranted() {
-                val remember = true
-                AlertDialog.Builder(activity).apply {
-                    setTitle(activity.getString(R.string.location))
-                    val org = if (origin.length > 50) {
-                        "${origin.subSequence(0, 50)}..."
-                    } else {
-                        origin
+                                                    callback: GeolocationPermissions.Callback) {
+        PermissionUtils.permission(PermissionConstants.LOCATION)
+            .callback(object : PermissionUtils.SimpleCallback {
+                override fun onGranted() {
+                    val remember = true
+                    MaterialDialog(context).show {
+                        title(R.string.location)
+                        val org = if (origin.length > 50) {
+                            "${origin.subSequence(0, 50)}..."
+                        } else {
+                            origin
+                        }
+                        message(text = org + context.getString(R.string.message_location))
+                        setCancelable(true)
+                        positiveButton(R.string.action_allow) {
+                            callback.invoke(origin, true, remember)
+                        }
+                        negativeButton(R.string.action_dont_allow) {
+                            callback.invoke(origin, false, remember)
+                        }
                     }
-                    setMessage(org + activity.getString(R.string.message_location))
-                    setCancelable(true)
-                    setPositiveButton(activity.getString(R.string.action_allow)) { _, _ ->
-                        callback.invoke(origin, true, remember)
-                    }
-                    setNegativeButton(activity.getString(R.string.action_dont_allow)) { _, _ ->
-                        callback.invoke(origin, false, remember)
-                    }
-                }.resizeAndShow()
-            }
+                }
 
-            override fun onDenied(permission: String) =//TODO show message and/or turn off setting
-                Unit
-        })
+                override fun onDenied() {
+                }
+            })
+            .request()
+    }
 
     override fun onCreateWindow(view: WebView, isDialog: Boolean, isUserGesture: Boolean,
                                 resultMsg: Message): Boolean {
@@ -188,7 +204,7 @@ class LightningChromeClient(
      * @return a Bitmap that can be used as a place holder for videos.
      */
     override fun getDefaultVideoPoster(): Bitmap? {
-        val resources = activity.resources
+        val resources = context.resources
         return BitmapFactory.decodeResource(resources, android.R.drawable.spinner_background)
     }
 
@@ -200,7 +216,7 @@ class LightningChromeClient(
      * of a video's loading progress.
      */
     override fun getVideoLoadingProgressView(): View =
-        LayoutInflater.from(activity).inflate(R.layout.browser_video_loading_progress, null)
+        LayoutInflater.from(context).inflate(R.layout.browser_video_loading_progress, null)
 
     override fun onHideCustomView() = uiController.onHideCustomView()
 

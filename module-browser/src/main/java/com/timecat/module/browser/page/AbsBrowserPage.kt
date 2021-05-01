@@ -1,4 +1,4 @@
-package com.timecat.module.browser
+package com.timecat.module.browser.page
 
 import acr.browser.lightning.IncognitoActivity
 import acr.browser.lightning.R
@@ -28,7 +28,7 @@ import acr.browser.lightning.notifications.IncognitoNotification
 import acr.browser.lightning.reading.activity.ReadingActivity
 import acr.browser.lightning.search.SearchEngineProvider
 import acr.browser.lightning.search.SuggestionsAdapter
-import acr.browser.lightning.settings.activity.SettingsActivity
+import acr.browser.lightning.settings.SettingsActivity
 import acr.browser.lightning.ssl.SSLState
 import acr.browser.lightning.utils.*
 import acr.browser.lightning.utils.DrawableUtils
@@ -63,7 +63,6 @@ import android.text.style.ParagraphStyle
 import android.util.AttributeSet
 import android.util.Log
 import android.view.*
-import androidx.appcompat.widget.*
 import android.view.View.*
 import android.view.ViewGroup.LayoutParams
 import android.view.animation.Animation
@@ -81,6 +80,7 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.view.ContextThemeWrapper
+import androidx.appcompat.widget.*
 import androidx.appcompat.widget.Toolbar
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
@@ -89,13 +89,13 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.palette.graphics.Palette
 import com.afollestad.materialdialogs.MaterialDialog
-import com.anthonycr.grant.PermissionsManager
 import com.anthonycr.progress.AnimatedProgressBar
 import com.google.android.material.snackbar.Snackbar
 import com.timecat.component.setting.DEF
 import com.timecat.data.bmob.dao.UserDao
 import com.timecat.data.room.RoomClient
 import com.timecat.data.room.record.RoomRecord
+import com.timecat.element.alert.ToastUtil
 import com.timecat.identity.data.block.BLOCK_APP_WebApp
 import io.reactivex.Completable
 import io.reactivex.Scheduler
@@ -103,20 +103,29 @@ import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import java.io.IOException
 import javax.inject.Inject
-
 /**
  * @author 林学渊
  * @email linxy59@mail2.sysu.edu.cn
- * @date 2021/1/23
- * @description 浏览器作为 fragment 嵌入主应用中
+ * @date 2021/3/29
+ * @description null
  * @usage null
  */
-abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UIController, OnClickListener, Toolbar.OnMenuItemClickListener {
+abstract class AbsBrowserPage: AbsThemeBrowserPage(), BrowserView, UIController, OnClickListener, Toolbar.OnMenuItemClickListener  {
+
+    override fun createView(context: Context): View {
+        val origin = context
+        val contextThemeWrapper: Context = ContextThemeWrapper(origin, theme())
+        val themeAwareInflater = LayoutInflater.from(origin).cloneInContext(contextThemeWrapper)
+        v = themeAwareInflater.inflate(layout(), null, false)
+        bindView(v)
+        return v
+    }
+
     open fun theme(): Int = R.style.Theme_LightTheme
     abstract fun menu(): Int
 
-    override fun lazyInit() {
-        val incognitoNotification = IncognitoNotification(_mActivity, notificationManager)
+    fun lazyInit(context: Context) {
+        val incognitoNotification = IncognitoNotification(context, notificationManager)
         tabsManager.addTabNumberChangedListener {
             if (isIncognito()) {
                 if (it == 0) {
@@ -128,7 +137,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         }
 
         presenter = BrowserPresenter(
-            _mActivity,
+            context,
             this,
             this,
             isIncognito(),
@@ -141,7 +150,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
             logger
         )
 
-        initialize()
+        initialize(context)
     }
 
     //region field
@@ -330,29 +339,16 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         right_drawer = view.findViewById(R.id.right_drawer)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        val origin = requireContext()
-        val contextThemeWrapper: Context = ContextThemeWrapper(origin, theme())
-        val themeAwareInflater = inflater.cloneInContext(contextThemeWrapper)
-        v = themeAwareInflater.inflate(layout(), container, false)
-        bindView(v)
-        return v
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    init {
         injector.inject(this)
+        lazyInit()
     }
 
-    fun context():Context=_mActivity
+    fun context(): Context = _mActivity
 
-    private fun initialize() {
+    private fun initialize(context: Context) {
         registerKeyEvent()
-        initializeToolbarHeight(resources.configuration)
+        initializeToolbarHeight(context().resources.configuration)
         toolbar.inflateMenu(menu())
         onCreateOptionsMenu(toolbar.menu)
         toolbar.setOnMenuItemClickListener(this)
@@ -396,7 +392,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
             }
         })
 
-        setNavigationDrawerWidth()
+        setNavigationDrawerWidth(context)
         drawer_layout.addDrawerListener(DrawerLocker())
 
         webPageBitmap = ThemeUtils.getThemedBitmap(context(), R.drawable.ic_webpage, isDarkTheme)
@@ -526,7 +522,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                 intent = null
             }
             presenter?.setupTabs(intent)
-            proxyUtils.checkForProxy(_mActivity)
+            proxyUtils.checkForProxy(context())
         }
     }
 
@@ -584,7 +580,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
 
     protected fun panicClean() {
         logger.log(TAG, "Closing browser")
-        tabsManager.newTab(_mActivity, NoOpInitializer(), false, this)
+        tabsManager.newTab(context(), NoOpInitializer(), false, this)
         tabsManager.switchToTab(0)
         tabsManager.clearSavedState()
 
@@ -710,9 +706,9 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
 
     }
 
-    private fun setNavigationDrawerWidth() {
-        val width = resources.displayMetrics.widthPixels - Utils.dpToPx(56f)
-        val maxWidth = if (isTablet) {
+    private fun setNavigationDrawerWidth(context:Context) {
+        val width = context.resources.displayMetrics.widthPixels - Utils.dpToPx(56f)
+        val maxWidth = if (context.isTablet) {
             Utils.dpToPx(320f)
         } else {
             Utils.dpToPx(300f)
@@ -768,7 +764,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         searchText = currentSearchEngine.queryUrl
 
         updateCookiePreference().subscribeOn(Schedulers.computation()).subscribe()
-        proxyUtils.updateProxySettings(_mActivity)
+        proxyUtils.updateProxySettings(context())
     }
 
     public fun onWindowVisibleToUserAfterResume() {
@@ -879,7 +875,10 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
     }
 
     private fun toast(msg: String) {
-        Toast.makeText(context(), msg, Toast.LENGTH_LONG).show()
+        ToastUtil.i_long(msg)
+    }
+    private fun toast(@StringRes msgRes: Int) {
+        ToastUtil.i_long(msgRes)
     }
 
     // 是否第一次收藏网址
@@ -903,7 +902,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                 if (boolean) {
                     suggestionsAdapter?.refreshBookmarks()
                     bookmarksView?.handleUpdatedUrl(url)
-                    toast(getString(R.string.message_bookmark_added))
+                    toast(R.string.message_bookmark_added)
                 }
             }
     }
@@ -952,7 +951,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
      * for. It highlights the text entered.
      */
     private fun findInPage() = BrowserDialog.showEditText(
-        _mActivity,
+        context(),
         R.string.action_find,
         R.string.search_hint,
         R.string.search_hint
@@ -979,7 +978,8 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
             return
         }
         BrowserDialog.show(
-            _mActivity, R.string.dialog_title_close_browser,
+            context(),
+            R.string.dialog_title_close_browser,
             DialogItem(title = R.string.close_tab) {
                 presenter?.deleteTab(position)
             },
@@ -1016,13 +1016,13 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
             is SSLState.Valid -> {
                 val bitmap =
                     DrawableUtils.getImageInsetInRoundedSquare(context(), R.drawable.ic_secured, R.color.ssl_secured)
-                val securedDrawable = BitmapDrawable(resources, bitmap)
+                val securedDrawable = BitmapDrawable(context().resources, bitmap)
                 securedDrawable
             }
             is SSLState.Invalid -> {
                 val bitmap =
                     DrawableUtils.getImageInsetInRoundedSquare(context(), R.drawable.ic_unsecured, R.color.ssl_unsecured)
-                val unsecuredDrawable = BitmapDrawable(resources, bitmap)
+                val unsecuredDrawable = BitmapDrawable(context().resources, bitmap)
                 unsecuredDrawable
             }
         }
@@ -1094,7 +1094,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
     }
 
     override fun showBlockedLocalFileDialog(onPositiveClick: Function0<Unit>) =
-        AlertDialog.Builder(_mActivity).apply {
+        AlertDialog.Builder(context()).apply {
             setCancelable(true)
             setTitle(R.string.title_warning)
             setMessage(R.string.message_blocked_local)
@@ -1473,7 +1473,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
             if (urlString != null) {
                 url = urlString.toString()
             }
-            if (url == null || url.startsWith(getString(R.string.suggestion))) {
+            if (url == null || url.startsWith(getUrl.resources.getString(R.string.suggestion))) {
                 val searchString = (view.findViewById<View>(R.id.title) as TextView).text
                 if (searchString != null) {
                     url = searchString.toString()
@@ -1580,7 +1580,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         startActivityForResult(Intent.createChooser(Intent(Intent.ACTION_GET_CONTENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
-        }, getString(R.string.title_file_chooser)), FILE_CHOOSER_REQUEST_CODE)
+        }, context().getString(R.string.title_file_chooser)), FILE_CHOOSER_REQUEST_CODE)
     }
 
     /**
@@ -1922,7 +1922,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
             LightningDialogBuilder.NewTab.INCOGNITO -> {
                 drawer_layout.closeDrawers()
                 val intent = IncognitoActivity.createIntent(context(), Uri.parse(url))
-                startActivity(intent)
+                context().startActivity(intent)
             }
         }
     }
@@ -1978,20 +1978,6 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                 search_bar.visibility = View.GONE
             }
         }
-    }
-
-    /**
-     * Handle the callback that permissions requested have been granted or not.
-     * This method should act upon the results of the permissions request.
-     *
-     * @param requestCode  the request code sent when initially making the request
-     * @param permissions  the array of the permissions that was requested
-     * @param grantResults the results of the permissions requests that provides
-     * information on whether the request was granted or not
-     */
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        PermissionsManager.getInstance().notifyPermissionsChange(permissions, grantResults)
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     /**
@@ -2051,7 +2037,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                     && !UrlUtils.isSpecialUrl(currentView.url)
                 ) {
                     HistoryEntry(currentView.url, currentView.title).also {
-                        Utils.createShortcut(_mActivity, it, currentView.favicon)
+                        Utils.createShortcut(context(), it, currentView.favicon)
                         logger.log(TAG, "Creating shortcut: ${it.title} ${it.url}")
                     }
                 }
@@ -2062,11 +2048,11 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                 return true
             }
             R.id.action_incognito -> {
-                startActivity(IncognitoActivity.createIntent(context()))
+                context().startActivity(IncognitoActivity.createIntent(context()))
                 return true
             }
             R.id.action_share -> {
-                IntentUtils(_mActivity).shareUrl(currentUrl, currentView?.title)
+                IntentUtils(context()).shareUrl(currentUrl, currentView?.title)
                 return true
             }
             R.id.action_bookmarks -> {
@@ -2081,7 +2067,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                 return true
             }
             R.id.action_settings -> {
-                startActivity(Intent(context(), SettingsActivity::class.java))
+                context().startActivity(Intent(context(), SettingsActivity::class.java))
                 return true
             }
             R.id.action_history -> {
@@ -2106,7 +2092,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                 if (currentUrl != null) {
                     val read = Intent(context(), ReadingActivity::class.java)
                     read.putExtra(LOAD_READING_URL, currentUrl)
-                    startActivity(read)
+                    context().startActivity(read)
                 }
                 return true
             }
@@ -2117,7 +2103,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                 ) {
                     if (UserDao.getCurrentUser() != null) {
                         if (DEF.config().getBoolean(IS_FIRST_COLLECTURL, true)) {
-                            MaterialDialog(_mActivity).show {
+                            MaterialDialog(context()).show {
                                 message(text = "网址不同于文章，相同网址可多次进行收藏，且不会显示收藏状态。")
                                 positiveButton(text = "知道了") {
                                     DEF.config().save(IS_FIRST_COLLECTURL, false)

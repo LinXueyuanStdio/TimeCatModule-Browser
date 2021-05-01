@@ -3,10 +3,10 @@
  */
 package acr.browser.lightning.download;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -16,10 +16,6 @@ import android.text.TextUtils;
 import android.webkit.CookieManager;
 import android.webkit.MimeTypeMap;
 import android.webkit.URLUtil;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +40,9 @@ import acr.browser.lightning.preference.UserPreferences;
 import acr.browser.lightning.utils.FileUtils;
 import acr.browser.lightning.utils.Utils;
 import acr.browser.lightning.view.LightningView;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
@@ -81,7 +80,7 @@ public class DownloadHandler {
      * @param mimetype           The mimetype of the content reported by the server
      * @param contentSize        The size of the content
      */
-    public void onDownloadStart(@NonNull Activity context, @NonNull UserPreferences manager, @NonNull String url, String userAgent,
+    public void onDownloadStart(@NonNull Context context, @NonNull UserPreferences manager, @NonNull String url, String userAgent,
                                 @Nullable String contentDisposition, String mimetype, @NonNull String contentSize) {
 
         logger.log(TAG, "DOWNLOAD: Trying to download from URL: " + url);
@@ -166,7 +165,7 @@ public class DownloadHandler {
      * @param contentSize        The size of the content
      */
     /* package */
-    private void onDownloadStartNoStream(@NonNull final Activity context, @NonNull UserPreferences preferences,
+    private void onDownloadStartNoStream(@NonNull final Context context, @NonNull UserPreferences preferences,
                                          @NonNull String url, String userAgent,
                                          String contentDisposition, @Nullable String mimetype, @NonNull String contentSize) {
         final String filename = URLUtil.guessFileName(url, contentDisposition, mimetype);
@@ -203,7 +202,7 @@ public class DownloadHandler {
             // This only happens for very bad urls, we want to catch the
             // exception here
             logger.log(TAG, "Exception while trying to parse url '" + url + '\'', e);
-            ActivityExtensions.snackbar(context, R.string.problem_download);
+            ActivityExtensions.snackbar(R.string.problem_download);
             return;
         }
 
@@ -213,7 +212,7 @@ public class DownloadHandler {
         try {
             request = new DownloadManager.Request(uri);
         } catch (IllegalArgumentException e) {
-            ActivityExtensions.snackbar(context, R.string.cannot_download);
+            ActivityExtensions.snackbar(R.string.cannot_download);
             return;
         }
 
@@ -225,7 +224,7 @@ public class DownloadHandler {
         Uri downloadFolder = Uri.parse(location);
 
         if (!isWriteAccessAvailable(downloadFolder)) {
-            ActivityExtensions.snackbar(context, R.string.problem_location_download);
+            ActivityExtensions.snackbar(R.string.problem_location_download);
             return;
         }
         String newMimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(Utils.guessFileExtension(filename));
@@ -260,13 +259,13 @@ public class DownloadHandler {
                     public void accept(FetchUrlMimeType.Result result) {
                         switch (result) {
                             case FAILURE_ENQUEUE:
-                                ActivityExtensions.snackbar(context, R.string.cannot_download);
+                                ActivityExtensions.snackbar(R.string.cannot_download);
                                 break;
                             case FAILURE_LOCATION:
-                                ActivityExtensions.snackbar(context, R.string.problem_location_download);
+                                ActivityExtensions.snackbar(R.string.problem_location_download);
                                 break;
                             case SUCCESS:
-                                ActivityExtensions.snackbar(context, R.string.download_pending);
+                                ActivityExtensions.snackbar(R.string.download_pending);
                                 break;
                         }
                     }
@@ -278,13 +277,13 @@ public class DownloadHandler {
             } catch (IllegalArgumentException e) {
                 // Probably got a bad URL or something
                 logger.log(TAG, "Unable to enqueue request", e);
-                ActivityExtensions.snackbar(context, R.string.cannot_download);
+                ActivityExtensions.snackbar(R.string.cannot_download);
             } catch (SecurityException e) {
                 // TODO write a download utility that downloads files rather than rely on the system
                 // because the system can only handle Environment.getExternal... as a path
-                ActivityExtensions.snackbar(context, R.string.problem_location_download);
+                ActivityExtensions.snackbar(R.string.problem_location_download);
             }
-            ActivityExtensions.snackbar(context, context.getString(R.string.download_pending) + ' ' + filename);
+            ActivityExtensions.snackbar(context.getString(R.string.download_pending) + ' ' + filename);
         }
 
         // save download in database

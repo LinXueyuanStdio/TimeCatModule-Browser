@@ -11,7 +11,6 @@ import acr.browser.lightning.utils.Option
 import acr.browser.lightning.utils.UrlUtils
 import acr.browser.lightning.utils.value
 import acr.browser.lightning.view.*
-import android.app.Activity
 import android.app.Application
 import android.app.SearchManager
 import android.content.Context
@@ -84,7 +83,7 @@ class TabsManager @Inject constructor(
      * new provided [intent] and emit the last tab that should be displayed. By default operates on
      * a background scheduler and emits on the foreground scheduler.
      */
-    fun initializeTabs(activity: Activity,
+    fun initializeTabs(context: Context,
                        intent: Intent?,
                        incognito: Boolean,
                        uiController:UIController): Single<LightningView> =
@@ -102,12 +101,12 @@ class TabsManager @Inject constructor(
                 return@flatMapObservable if (incognito) {
                     initializeIncognitoMode(it.value())
                 } else {
-                    initializeRegularMode(it.value(), activity)
+                    initializeRegularMode(it.value(), context)
                 }
             }
             .subscribeOn(databaseScheduler)
             .observeOn(mainScheduler)
-            .map { newTab(activity, it, incognito, uiController) }
+            .map { newTab(context, it, incognito, uiController) }
             .lastOrError()
             .doAfterSuccess { finishInitialization() }
 
@@ -243,20 +242,20 @@ class TabsManager @Inject constructor(
     /**
      * Create and return a new tab. The tab is automatically added to the tabs list.
      *
-     * @param activity the activity needed to create the tab.
+     * @param context the activity needed to create the tab.
      * @param tabInitializer the initializer to run on the tab after it's been created.
      * @param isIncognito whether the tab is an incognito tab or not.
      * @return a valid initialized tab.
      */
     fun newTab(
-        activity: Activity,
+        context: Context,
         tabInitializer: TabInitializer,
         isIncognito: Boolean,
         uiController:UIController
     ): LightningView {
         logger.log(TAG, "New tab")
         val tab = LightningView(
-            activity,
+            context,
             tabInitializer,
             isIncognito,
             homePageInitializer,

@@ -13,21 +13,30 @@ import acr.browser.lightning.download.DownloadHandler
 import acr.browser.lightning.download.LightningDownloadListener
 import acr.browser.lightning.reading.activity.ReadingActivity
 import acr.browser.lightning.search.SuggestionsAdapter
-import acr.browser.lightning.settings.activity.SettingsActivity
-import acr.browser.lightning.settings.activity.ThemableSettingsActivity
+import acr.browser.lightning.settings.*
+import acr.browser.lightning.settings.SettingsActivity
 import acr.browser.lightning.settings.fragment.*
 import acr.browser.lightning.utils.ProxyUtils
 import acr.browser.lightning.view.LightningChromeClient
 import acr.browser.lightning.view.LightningView
 import acr.browser.lightning.view.LightningWebClient
-import com.timecat.module.browser.AbsBrowserFragment
-import com.timecat.module.browser.AbsThemeBrowserFragment
+import com.timecat.module.browser.fragment.AbsBrowserFragment
+import com.timecat.module.browser.fragment.AbsThemeBrowserFragment
+import com.timecat.module.browser.page.AbsThemeBrowserPage
 import dagger.Component
 import javax.inject.Singleton
 
 @Singleton
 @Component(modules = [(AppModule::class), (AppBindsModule::class)])
 interface AppComponent {
+
+    fun inject(fragment: AdvancedSettingsActivity)
+    fun inject(fragment: BookmarkSettingsActivity)
+    fun inject(fragment: DisplaySettingsActivity)
+    fun inject(fragment: GeneralSettingsActivity)
+    fun inject(fragment: PrivacySettingsActivity)
+
+    fun inject(page: AbsThemeBrowserPage)
 
     fun inject(fragment: AbsThemeBrowserFragment)
 
@@ -37,8 +46,6 @@ interface AppComponent {
 
     fun inject(fragment: BookmarksFragment)
 
-    fun inject(fragment: BookmarkSettingsFragment)
-
     fun inject(builder: LightningDialogBuilder)
 
     fun inject(fragment: TabsFragment)
@@ -46,8 +53,6 @@ interface AppComponent {
     fun inject(lightningView: LightningView)
 
     fun inject(activity: ThemableBrowserActivity)
-
-    fun inject(advancedSettingsFragment: AdvancedSettingsFragment)
 
     fun inject(app: AppLifecyclesImpl)
 
@@ -59,13 +64,7 @@ interface AppComponent {
 
     fun inject(activity: SettingsActivity)
 
-    fun inject(activity: ThemableSettingsActivity)
-
     fun inject(listener: LightningDownloadListener)
-
-    fun inject(fragment: PrivacySettingsFragment)
-
-    fun inject(fragment: DebugSettingsFragment)
 
     fun inject(suggestionsAdapter: SuggestionsAdapter)
 
@@ -74,10 +73,6 @@ interface AppComponent {
     fun inject(downloadHandler: DownloadHandler)
 
     fun inject(searchBoxModel: SearchBoxModel)
-
-    fun inject(generalSettingsFragment: GeneralSettingsFragment)
-
-    fun inject(displaySettingsFragment: DisplaySettingsFragment)
 
     fun provideAssetsAdBlocker(): AssetsAdBlocker
 

@@ -1,4 +1,4 @@
-package com.timecat.module.browser
+package com.timecat.module.browser.page
 
 import acr.browser.lightning.IncognitoActivity
 import acr.browser.lightning.R
@@ -8,19 +8,16 @@ import android.net.Uri
 import android.os.Build
 import android.webkit.CookieManager
 import android.webkit.CookieSyncManager
-import com.timecat.identity.readonly.RouterHub
-import com.xiaojinzi.component.anno.FragmentAnno
 import io.reactivex.Completable
 
 /**
  * @author 林学渊
  * @email linxy59@mail2.sysu.edu.cn
- * @date 2021/3/25
+ * @date 2021/5/1
  * @description null
  * @usage null
  */
-@FragmentAnno(RouterHub.MASTER_IncognitoFragment)
-class IncognitoFragment : AbsBrowserFragment() {
+class IncognitoPage : AbsBrowserPage() {
     override fun theme(): Int = R.style.Theme_DarkTheme
     override fun menu(): Int = R.menu.incognito
 
@@ -28,7 +25,7 @@ class IncognitoFragment : AbsBrowserFragment() {
     public override fun updateCookiePreference(): Completable = Completable.fromAction {
         val cookieManager = CookieManager.getInstance()
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            CookieSyncManager.createInstance(_mActivity)
+            CookieSyncManager.createInstance(context())
         }
         cookieManager.setAcceptCookie(userPreferences.incognitoCookiesEnabled)
     }

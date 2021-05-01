@@ -1,6 +1,5 @@
 package acr.browser.lightning.utils;
 
-import acr.browser.lightning.R;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -13,13 +12,17 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.util.TypedValue;
+
+import com.timecat.component.identity.Attr;
+
+import acr.browser.lightning.R;
 import androidx.annotation.AttrRes;
 import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
-import android.util.TypedValue;
 
 public final class ThemeUtils {
 
@@ -35,7 +38,7 @@ public final class ThemeUtils {
      */
     @ColorInt
     public static int getPrimaryColor(@NonNull Context context) {
-        return getColor(context, R.attr.colorPrimary);
+        return Attr.getPrimaryColor(context);
     }
 
     /**
@@ -46,7 +49,7 @@ public final class ThemeUtils {
      */
     @ColorInt
     public static int getPrimaryColorDark(@NonNull Context context) {
-        return getColor(context, R.attr.colorPrimaryDark);
+        return Attr.getPrimaryDarkColor(context);
     }
 
     /**
@@ -57,7 +60,7 @@ public final class ThemeUtils {
      */
     @ColorInt
     public static int getAccentColor(@NonNull Context context) {
-        return getColor(context, R.attr.colorAccent);
+        return Attr.getAccentColor(context);
     }
 
     /**

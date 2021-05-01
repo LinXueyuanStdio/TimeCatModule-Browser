@@ -3,11 +3,6 @@
  */
 package acr.browser.lightning.utils;
 
-import acr.browser.lightning.R;
-import acr.browser.lightning.constant.Constants;
-import acr.browser.lightning.database.HistoryEntry;
-import acr.browser.lightning.dialog.BrowserDialog;
-import acr.browser.lightning.extensions.ActivityExtensions;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -24,14 +19,11 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
-import androidx.appcompat.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.webkit.URLUtil;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +31,16 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import acr.browser.lightning.R;
+import acr.browser.lightning.constant.Constants;
+import acr.browser.lightning.database.HistoryEntry;
+import acr.browser.lightning.dialog.BrowserDialog;
+import acr.browser.lightning.extensions.ActivityExtensions;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.AlertDialog;
 
 public final class Utils {
 
@@ -251,17 +253,17 @@ public final class Utils {
      * browser. The icon, URL, and title are used in
      * the creation of the shortcut.
      *
-     * @param activity the activity needed to create
+     * @param context the activity needed to create
      *                 the intent and show a snackbar message
      * @param historyEntry     the HistoryEntity to create the shortcut from
      */
-    public static void createShortcut(@NonNull Activity activity,
+    public static void createShortcut(@NonNull Context context,
                                       @NonNull HistoryEntry historyEntry,
                                       @NonNull Bitmap favicon) {
         Intent shortcutIntent = new Intent(Intent.ACTION_VIEW);
         shortcutIntent.setData(Uri.parse(historyEntry.getUrl()));
 
-        final String title = TextUtils.isEmpty(historyEntry.getTitle()) ? activity.getString(R.string.untitled) : historyEntry.getTitle();
+        final String title = TextUtils.isEmpty(historyEntry.getTitle()) ? context.getString(R.string.untitled) : historyEntry.getTitle();
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             Intent addIntent = new Intent();
@@ -269,22 +271,22 @@ public final class Utils {
             addIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, title);
             addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON, favicon);
             addIntent.setAction("com.android.launcher.action.INSTALL_SHORTCUT");
-            activity.sendBroadcast(addIntent);
-            ActivityExtensions.snackbar(activity, R.string.message_added_to_homescreen);
+            context.sendBroadcast(addIntent);
+            ActivityExtensions.snackbar(R.string.message_added_to_homescreen);
         } else {
-            ShortcutManager shortcutManager = activity.getSystemService(ShortcutManager.class);
+            ShortcutManager shortcutManager = context.getSystemService(ShortcutManager.class);
             if (shortcutManager.isRequestPinShortcutSupported()) {
                 ShortcutInfo pinShortcutInfo =
-                    new ShortcutInfo.Builder(activity, "browser-shortcut-" + historyEntry.getUrl().hashCode())
+                    new ShortcutInfo.Builder(context, "browser-shortcut-" + historyEntry.getUrl().hashCode())
                         .setIntent(shortcutIntent)
                         .setIcon(Icon.createWithBitmap(favicon))
                         .setShortLabel(title)
                         .build();
 
                 shortcutManager.requestPinShortcut(pinShortcutInfo, null);
-                ActivityExtensions.snackbar(activity, R.string.message_added_to_homescreen);
+                ActivityExtensions.snackbar(R.string.message_added_to_homescreen);
             } else {
-                ActivityExtensions.snackbar(activity, R.string.shortcut_message_failed_to_add);
+                ActivityExtensions.snackbar(R.string.shortcut_message_failed_to_add);
             }
         }
     }

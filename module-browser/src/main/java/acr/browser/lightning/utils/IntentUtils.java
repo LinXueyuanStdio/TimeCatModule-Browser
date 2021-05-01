@@ -1,13 +1,11 @@
 package acr.browser.lightning.utils;
 
-import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -18,10 +16,12 @@ import java.util.regex.Pattern;
 
 import acr.browser.lightning.R;
 import acr.browser.lightning.constant.Constants;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public class IntentUtils {
 
-    @NonNull private final Activity mActivity;
+    @NonNull private final Context context;
 
     private static final Pattern ACCEPTED_URI_SCHEMA = Pattern.compile("(?i)"
         + // switch on case insensitive matching
@@ -30,8 +30,8 @@ public class IntentUtils {
         "(?:http|https|file)://" + "|(?:inline|data|about|javascript):" + "|(?:.*:.*@)"
         + ')' + "(.*)");
 
-    public IntentUtils(@NonNull Activity activity) {
-        mActivity = activity;
+    public IntentUtils(@NonNull Context context) {
+        this.context = context;
     }
 
     public boolean startActivityForUrl(@Nullable WebView tab, @NonNull String url) {
@@ -46,14 +46,14 @@ public class IntentUtils {
         intent.addCategory(Intent.CATEGORY_BROWSABLE);
         intent.setComponent(null);
         intent.setSelector(null);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        if (mActivity.getPackageManager().resolveActivity(intent, 0) == null) {
+        if (context.getPackageManager().resolveActivity(intent, 0) == null) {
             String packagename = intent.getPackage();
             if (packagename != null) {
-                intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=pname:"
-                    + packagename));
+                intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://search?q=pname:" + packagename));
                 intent.addCategory(Intent.CATEGORY_BROWSABLE);
-                mActivity.startActivity(intent);
+                context.startActivity(intent);
                 return true;
             } else {
                 return false;
@@ -68,9 +68,8 @@ public class IntentUtils {
             return false;
         }
         try {
-            if (mActivity.startActivityIfNeeded(intent, -1)) {
-                return true;
-            }
+            context.startActivity(intent);
+            return true;
         } catch (Exception exception) {
             exception.printStackTrace();
             // TODO: 6/5/17 fix case where this could throw a FileUriExposedException due to file:// urls
@@ -83,7 +82,7 @@ public class IntentUtils {
      * apps like google maps or youtube
      */
     private boolean isSpecializedHandlerAvailable(@NonNull Intent intent) {
-        PackageManager pm = mActivity.getPackageManager();
+        PackageManager pm = context.getPackageManager();
         List<ResolveInfo> handlers = pm.queryIntentActivities(intent,
             PackageManager.GET_RESOLVED_FILTER);
         if (handlers == null || handlers.isEmpty()) {
@@ -127,7 +126,7 @@ public class IntentUtils {
                 shareIntent.putExtra(Intent.EXTRA_SUBJECT, title);
             }
             shareIntent.putExtra(Intent.EXTRA_TEXT, url);
-            mActivity.startActivity(Intent.createChooser(shareIntent, mActivity.getString(R.string.dialog_title_share)));
+            context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.dialog_title_share)));
         }
     }
 }

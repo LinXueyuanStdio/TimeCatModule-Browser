@@ -14,8 +14,8 @@ import acr.browser.lightning.ssl.SSLState
 import acr.browser.lightning.ssl.SslWarningPreferences
 import acr.browser.lightning.utils.*
 import android.annotation.TargetApi
-import android.app.Activity
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.MailTo
@@ -39,12 +39,12 @@ import java.util.*
 import javax.inject.Inject
 
 class LightningWebClient(
-    private val activity: Activity,
+    private val context: Context,
     private val lightningView: LightningView,
     private val uiController: UIController
 ) : WebViewClient() {
 
-    private val intentUtils = IntentUtils(activity)
+    private val intentUtils = IntentUtils(context)
     private val emptyResponseByteArray: ByteArray = byteArrayOf()
 
     @Inject
@@ -82,7 +82,7 @@ class LightningWebClient(
     private val sslStateSubject: PublishSubject<SSLState> = PublishSubject.create()
 
     init {
-        activity.injector.inject(this)
+        context.injector.inject(this)
         adBlock = chooseAdBlocker()
     }
 
@@ -93,9 +93,9 @@ class LightningWebClient(
     }
 
     private fun chooseAdBlocker(): AdBlocker = if (userPreferences.adBlockEnabled) {
-        activity.injector.provideAssetsAdBlocker()
+        context.injector.provideAssetsAdBlocker()
     } else {
-        activity.injector.provideNoOpAdBlocker()
+        context.injector.provideNoOpAdBlocker()
     }
 
     private fun isAd(pageUrl: String, requestUrl: String) =
@@ -130,7 +130,7 @@ class LightningWebClient(
             view.postInvalidate()
         }
         if (view.title == null || view.title.isEmpty()) {
-            lightningView.titleInfo.setTitle(activity.getString(R.string.untitled))
+            lightningView.titleInfo.setTitle(context.getString(R.string.untitled))
         } else {
             lightningView.titleInfo.setTitle(view.title)
         }
@@ -157,14 +157,14 @@ class LightningWebClient(
 
     override fun onReceivedHttpAuthRequest(view: WebView, handler: HttpAuthHandler,
                                            host: String, realm: String) =
-        AlertDialog.Builder(activity).apply {
-            val dialogView = LayoutInflater.from(activity).inflate(R.layout.browser_dialog_auth_request, null)
+        AlertDialog.Builder(context).apply {
+            val dialogView = LayoutInflater.from(context).inflate(R.layout.browser_dialog_auth_request, null)
 
             val realmLabel = dialogView.findViewById<TextView>(R.id.auth_request_realm_textview)
             val name = dialogView.findViewById<EditText>(R.id.auth_request_username_edittext)
             val password = dialogView.findViewById<EditText>(R.id.auth_request_password_edittext)
 
-            realmLabel.text = activity.getString(R.string.label_realm, realm)
+            realmLabel.text = context.getString(R.string.label_realm, realm)
 
             setView(dialogView)
             setTitle(R.string.title_sign_in)
@@ -208,25 +208,25 @@ class LightningWebClient(
 
         val stringBuilder = StringBuilder()
         for (messageCode in errorCodeMessageCodes) {
-            stringBuilder.append(" - ").append(activity.getString(messageCode)).append('\n')
+            stringBuilder.append(" - ").append(context.getString(messageCode)).append('\n')
         }
-        val alertMessage = activity.getString(R.string.message_insecure_connection, stringBuilder.toString())
+        val alertMessage = context.getString(R.string.message_insecure_connection, stringBuilder.toString())
 
-        AlertDialog.Builder(activity).apply {
-            val view = LayoutInflater.from(activity).inflate(R.layout.browser_dialog_ssl_warning, null)
+        AlertDialog.Builder(context).apply {
+            val view = LayoutInflater.from(context).inflate(R.layout.browser_dialog_ssl_warning, null)
             val dontAskAgain = view.findViewById<CheckBox>(R.id.checkBoxDontAskAgain)
-            setTitle(activity.getString(R.string.title_warning))
+            setTitle(context.getString(R.string.title_warning))
             setMessage(alertMessage)
             setCancelable(true)
             setView(view)
             setOnCancelListener { handler.cancel() }
-            setPositiveButton(activity.getString(R.string.action_yes)) { _, _ ->
+            setPositiveButton(context.getString(R.string.action_yes)) { _, _ ->
                 if (dontAskAgain.isChecked) {
                     sslWarningPreferences.rememberBehaviorForDomain(webView.url, SslWarningPreferences.Behavior.PROCEED)
                 }
                 handler.proceed()
             }
-            setNegativeButton(activity.getString(R.string.action_no)) { _, _ ->
+            setNegativeButton(context.getString(R.string.action_no)) { _, _ ->
                 if (dontAskAgain.isChecked) {
                     sslWarningPreferences.rememberBehaviorForDomain(webView.url, SslWarningPreferences.Behavior.CANCEL)
                 }
@@ -236,14 +236,14 @@ class LightningWebClient(
     }
 
     override fun onFormResubmission(view: WebView, dontResend: Message, resend: Message) =
-        AlertDialog.Builder(activity).apply {
-            setTitle(activity.getString(R.string.title_form_resubmission))
-            setMessage(activity.getString(R.string.message_form_resubmission))
+        AlertDialog.Builder(context).apply {
+            setTitle(context.getString(R.string.title_form_resubmission))
+            setMessage(context.getString(R.string.message_form_resubmission))
             setCancelable(true)
-            setPositiveButton(activity.getString(R.string.action_yes)) { _, _ ->
+            setPositiveButton(context.getString(R.string.action_yes)) { _, _ ->
                 resend.sendToTarget()
             }
-            setNegativeButton(activity.getString(R.string.action_no)) { _, _ ->
+            setNegativeButton(context.getString(R.string.action_no)) { _, _ ->
                 dontResend.sendToTarget()
             }
         }.resizeAndShow()
@@ -258,7 +258,7 @@ class LightningWebClient(
 
     private fun shouldOverrideLoading(view: WebView, url: String): Boolean {
         // Check if configured proxy is available
-        if (!proxyUtils.isProxyReady(activity)) {
+        if (!proxyUtils.isProxyReady()) {
             // User has been notified
             return true
         }
@@ -297,7 +297,7 @@ class LightningWebClient(
             val mailTo = MailTo.parse(url)
             val i = Utils.newEmailIntent(mailTo.to, mailTo.subject,
                 mailTo.body, mailTo.cc)
-            activity.startActivity(i)
+            context.startActivity(i)
             view.reload()
             return true
         } else if (url.startsWith("intent://")) {
@@ -312,7 +312,7 @@ class LightningWebClient(
                 intent.component = null
                 intent.selector = null
                 try {
-                    activity.startActivity(intent)
+                    context.startActivity(intent)
                 } catch (e: ActivityNotFoundException) {
                     logger.log(TAG, "ActivityNotFoundException")
                 }
@@ -328,17 +328,17 @@ class LightningWebClient(
 
                 val intent = Intent(Intent.ACTION_VIEW)
                 intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                val contentUri = FileProvider.getUriForFile(activity, "com.time.cat.file.provider", file)
+                val contentUri = FileProvider.getUriForFile(context, "com.time.cat.file.provider", file)
                 intent.setDataAndType(contentUri, newMimeType)
 
                 try {
-                    activity.startActivity(intent)
+                    context.startActivity(intent)
                 } catch (e: Exception) {
                     println("LightningWebClient: cannot open downloaded file")
                 }
 
             } else {
-                activity.snackbar(R.string.message_open_download_fail)
+                snackbar(R.string.message_open_download_fail)
             }
             return true
         }

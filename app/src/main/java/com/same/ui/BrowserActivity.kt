@@ -3,7 +3,7 @@ package com.same.ui
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import com.timecat.fake.file.R
-import com.timecat.module.browser.BrowserFragment
+import com.timecat.module.browser.fragment.BrowserFragment
 import com.timecat.page.base.friend.compact.BaseFragmentActivity
 
 /**

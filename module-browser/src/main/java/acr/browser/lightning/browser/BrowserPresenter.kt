@@ -18,7 +18,7 @@ import acr.browser.lightning.view.LightningView
 import acr.browser.lightning.view.TabInitializer
 import acr.browser.lightning.view.UrlInitializer
 import acr.browser.lightning.view.find.FindResults
-import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.webkit.URLUtil
 import io.reactivex.Scheduler
@@ -30,7 +30,7 @@ import io.reactivex.rxkotlin.subscribeBy
  * browser.
  */
 class BrowserPresenter(
-    private val activity: Activity,
+    private val context: Context,
     private val uiController: UIController,
     private val view: BrowserView,
     private val isIncognito: Boolean,
@@ -57,7 +57,7 @@ class BrowserPresenter(
      * @param intent the intent to handle, may be null.
      */
     fun setupTabs(intent: Intent?) {
-        tabsModel.initializeTabs(activity, intent, isIncognito, uiController)
+        tabsModel.initializeTabs(context, intent, isIncognito, uiController)
             .subscribeBy(
                 onSuccess = {
                     // At this point we always have at least a tab in the tab manager
@@ -298,7 +298,7 @@ class BrowserPresenter(
 
         logger.log(TAG, "New tab, show: $show")
 
-        val startingTab = tabsModel.newTab(activity, tabInitializer, isIncognito, uiController)
+        val startingTab = tabsModel.newTab(context, tabInitializer, isIncognito, uiController)
         if (tabsModel.size() == 1) {
             startingTab.resumeTimers()
         }

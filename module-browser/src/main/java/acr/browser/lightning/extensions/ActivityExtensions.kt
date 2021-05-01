@@ -2,10 +2,8 @@
 
 package acr.browser.lightning.extensions
 
-import android.app.Activity
 import androidx.annotation.StringRes
-import com.google.android.material.snackbar.Snackbar
-import android.view.View
+import com.timecat.element.alert.ToastUtil
 
 /**
  * Displays a snackbar to the user with a [StringRes] message.
@@ -16,9 +14,8 @@ import android.view.View
  *
  * @param resource the string resource to display to the user.
  */
-fun Activity.snackbar(@StringRes resource: Int) {
-    val view = findViewById<View>(android.R.id.content)
-    Snackbar.make(view, resource, Snackbar.LENGTH_SHORT).show()
+fun snackbar(@StringRes resource: Int) {
+    ToastUtil.i(resource)
 }
 
 /**
@@ -27,7 +24,6 @@ fun Activity.snackbar(@StringRes resource: Int) {
  * @param message the message to display to the user.
  * @see snackbar
  */
-fun Activity.snackbar(message: String) {
-    val view = findViewById<View>(android.R.id.content)
-    Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+fun snackbar(message: String) {
+    ToastUtil.i(message)
 }

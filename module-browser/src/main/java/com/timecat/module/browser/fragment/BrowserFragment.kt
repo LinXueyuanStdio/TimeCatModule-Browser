@@ -1,4 +1,4 @@
-package com.timecat.module.browser
+package com.timecat.module.browser.fragment
 
 import acr.browser.lightning.R
 import android.os.Build
