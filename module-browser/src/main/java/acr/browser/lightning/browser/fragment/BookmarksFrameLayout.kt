@@ -13,7 +13,6 @@ import acr.browser.lightning.database.bookmark.BookmarkRepository
 import acr.browser.lightning.di.DatabaseScheduler
 import acr.browser.lightning.di.MainScheduler
 import acr.browser.lightning.di.NetworkScheduler
-import acr.browser.lightning.di.injector
 import acr.browser.lightning.dialog.BrowserDialog
 import acr.browser.lightning.dialog.DialogItem
 import acr.browser.lightning.dialog.LightningDialogBuilder
@@ -25,10 +24,12 @@ import acr.browser.lightning.reading.activity.ReadingActivity
 import acr.browser.lightning.utils.ThemeUtils
 import acr.browser.lightning.utils.UrlUtils
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.PorterDuff
 import android.os.Bundle
+import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -37,7 +38,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.IdRes
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -48,7 +48,20 @@ import io.reactivex.rxkotlin.subscribeBy
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
-class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickListener, BookmarksView {
+/**
+ * @author 林学渊
+ * @email linxy59@mail2.sysu.edu.cn
+ * @date 2021/5/2
+ * @description null
+ * @usage null
+ */
+class BookmarksFrameLayout @JvmOverloads constructor(
+    context: Context,
+    var uiController: UIController,
+    private var isIncognito: Boolean = false,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : FrameLayout(context, attrs, defStyleAttr), View.OnClickListener, View.OnLongClickListener, BookmarksView {
 
     // Managers
     @Inject
@@ -79,8 +92,6 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
     @Inject
     internal lateinit var whitelistModel: AllowListModel
 
-    private lateinit var uiController: UIController
-
     // Adapter
     private var bookmarkAdapter: BookmarkListAdapter? = null
 
@@ -91,8 +102,6 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
     // Colors
     private var iconColor: Int = 0
     private var scrollIndex: Int = 0
-
-    private var isIncognito: Boolean = false
 
     private var darkTheme: Boolean = false
 
@@ -111,28 +120,16 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
     private lateinit var action_reading: FrameLayout
     private lateinit var action_reading_image: ImageView
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+init{
         injector.inject(this)
 
         val context = requireNotNull(context) { "Context should never be null in onCreate" }
 
-        isIncognito = arguments?.getBoolean(INCOGNITO_MODE, false) == true
         darkTheme = userPreferences.useTheme != 0 || isIncognito
         webPageBitmap = ThemeUtils.getThemedBitmap(context, R.drawable.ic_webpage, darkTheme)
         folderBitmap = ThemeUtils.getThemedBitmap(context, R.drawable.ic_folder_special_24dp, darkTheme)
         iconColor = ThemeUtils.getIconThemeColor(context, darkTheme)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (bookmarkAdapter != null) {
-            setBookmarksShown(null, false)
-        }
-    }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-        inflater.inflate(R.layout.browser_bookmark_drawer, container, false).apply {
+        LayoutInflater.from(context).inflate(R.layout.browser_bookmark_drawer, this, true).apply {
             bookmark_title_layout = findViewById(R.id.bookmark_title_layout)
             bookmark_back_button = findViewById(R.id.bookmark_back_button)
             bookmark_back_button_image = findViewById(R.id.bookmark_back_button_image)
@@ -144,21 +141,27 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
             action_reading = findViewById(R.id.action_reading)
             action_reading_image = findViewById(R.id.action_reading_image)
         }
+    onViewCreated()
+    }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    fun onResume() {
+        if (bookmarkAdapter != null) {
+            setBookmarksShown(null, false)
+        }
+    }
 
-        bookmark_back_button_image?.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
-        val backView = view.findViewById<View>(R.id.bookmark_back_button)
+    fun onViewCreated() {
+        bookmark_back_button_image.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
+        val backView = findViewById<View>(R.id.bookmark_back_button)
         backView.setOnClickListener {
             if (!uiModel.isCurrentFolderRoot()) {
                 setBookmarksShown(null, true)
-                bookmark_list_view?.layoutManager?.scrollToPosition(scrollIndex)
+                bookmark_list_view.layoutManager?.scrollToPosition(scrollIndex)
             }
         }
-        setupNavigationButton(view, R.id.action_add_bookmark, R.id.action_add_bookmark_image)
-        setupNavigationButton(view, R.id.action_reading, R.id.action_reading_image)
-        setupNavigationButton(view, R.id.action_page_tools, R.id.action_page_tools_image)
+        setupNavigationButton(this, R.id.action_add_bookmark, R.id.action_add_bookmark_image)
+        setupNavigationButton(this, R.id.action_reading, R.id.action_reading_image)
+        setupNavigationButton(this, R.id.action_page_tools, R.id.action_page_tools_image)
 
 
         bookmarkAdapter = BookmarkListAdapter(
@@ -171,7 +174,7 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
             this::handleItemClick
         )
 
-        bookmark_list_view?.let {
+        bookmark_list_view.let {
             it.layoutManager = LinearLayoutManager(context)
             it.adapter = bookmarkAdapter
         }
@@ -179,32 +182,22 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
         setBookmarksShown(null, true)
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
+    override fun onDetachedFromWindow() {
 
         bookmarksSubscription?.dispose()
         bookmarkUpdateSubscription?.dispose()
 
         bookmarkAdapter?.cleanupSubscriptions()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        bookmarksSubscription?.dispose()
-        bookmarkUpdateSubscription?.dispose()
-
-        bookmarkAdapter?.cleanupSubscriptions()
+        super.onDetachedFromWindow()
     }
 
     private fun getTabsManager(): TabsManager = uiController.getTabModel()
 
     fun reinitializePreferences() {
-        val activity = activity ?: return
         val darkTheme = userPreferences.useTheme != 0 || isIncognito
-        webPageBitmap = ThemeUtils.getThemedBitmap(activity, R.drawable.ic_webpage, darkTheme)
-        folderBitmap = ThemeUtils.getThemedBitmap(activity, R.drawable.ic_folder_special_24dp, darkTheme)
-        iconColor = ThemeUtils.getIconThemeColor(activity, darkTheme)
+        webPageBitmap = ThemeUtils.getThemedBitmap(context, R.drawable.ic_webpage, darkTheme)
+        folderBitmap = ThemeUtils.getThemedBitmap(context, R.drawable.ic_folder_special_24dp, darkTheme)
+        iconColor = ThemeUtils.getIconThemeColor(context, darkTheme)
     }
 
     private fun updateBookmarkIndicator(url: String) {
@@ -214,16 +207,12 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
             .observeOn(mainScheduler)
             .subscribe { boolean ->
                 bookmarkUpdateSubscription = null
-                val activity = activity
-                if (action_add_bookmark_image == null || activity == null) {
-                    return@subscribe
-                }
                 if (boolean) {
-                    action_add_bookmark_image?.setImageResource(R.drawable.ic_bookmark)
-                    action_add_bookmark_image?.setColorFilter(ThemeUtils.getAccentColor(activity), PorterDuff.Mode.SRC_IN)
+                    action_add_bookmark_image.setImageResource(R.drawable.ic_bookmark)
+                    action_add_bookmark_image.setColorFilter(ThemeUtils.getAccentColor(context), PorterDuff.Mode.SRC_IN)
                 } else {
-                    action_add_bookmark_image?.setImageResource(R.drawable.ic_action_star)
-                    action_add_bookmark_image?.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
+                    action_add_bookmark_image.setImageResource(R.drawable.ic_action_star)
+                    action_add_bookmark_image.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
                 }
             }
     }
@@ -310,7 +299,7 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
                 }
             }
             R.id.action_page_tools -> {
-                activity?.also(this::showPageToolsDialog)
+                showPageToolsDialog(context)
             }
             else -> Unit
         }
@@ -319,14 +308,13 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
     /**
      * Show the page tools dialog.
      */
-    private fun showPageToolsDialog(activity: Activity) {
+    private fun showPageToolsDialog(context: Context) {
         val currentTab = getTabsManager().currentTab ?: return
         val isAllowedAds = whitelistModel.isUrlAllowedAds(currentTab.url)
         val whitelistColor = if (isAllowedAds) {
-            ThemeUtils.getIconThemeColor(activity, darkTheme)
+            ThemeUtils.getIconThemeColor(context, darkTheme)
         } else {
-
-            activity.color(R.color.error_red)
+            context.color(R.color.error_red)
         }
         val whitelistString = if (isAllowedAds) {
             R.string.dialog_adblock_enable_for_site
@@ -334,10 +322,10 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
             R.string.dialog_adblock_disable_for_site
         }
 
-        BrowserDialog.showWithIcons(activity, activity.getString(R.string.dialog_tools_title),
+        BrowserDialog.showWithIcons(context, context.getString(R.string.dialog_tools_title),
             DialogItem(
-                activity.drawable(R.drawable.ic_action_desktop),
-                ThemeUtils.getIconThemeColor(activity, darkTheme),
+                context.drawable(R.drawable.ic_action_desktop),
+                ThemeUtils.getIconThemeColor(context, darkTheme),
                 R.string.dialog_toggle_desktop
             ) {
                 getTabsManager().currentTab?.apply {
@@ -347,7 +335,7 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
                 }
             },
             DialogItem(
-                activity.drawable(R.drawable.ic_block),
+                context.drawable(R.drawable.ic_block),
                 whitelistColor,
                 whitelistString,
                 !UrlUtils.isSpecialUrl(currentTab.url)
@@ -510,23 +498,4 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
 
         private const val INCOGNITO_MODE = "$TAG.INCOGNITO_MODE"
     }
-
-}
-
-class BookmarkViewModel(
-    val bookmark: Bookmark,
-    var icon: Bitmap? = null
-) {
-    override fun equals(other: Any?): Boolean {
-        return if (other is BookmarkViewModel) {
-            bookmark == other.bookmark
-        } else {
-            super.equals(other)
-        }
-    }
-
-    override fun hashCode(): Int = bookmark.hashCode()
-
-    override fun toString(): String = "BookmarkViewModel(bookmark=$bookmark)"
-
 }

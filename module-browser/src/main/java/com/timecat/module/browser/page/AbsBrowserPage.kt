@@ -396,8 +396,6 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
 
         webPageBitmap = ThemeUtils.getThemedBitmap(context(), R.drawable.ic_webpage, isDarkTheme)
 
-        val fragmentManager = childFragmentManager
-
         val tabsFragment: TabsFragment? = fragmentManager.findFragmentByTag(TAG_TABS_FRAGMENT) as? TabsFragment
         val bookmarksFragment: BookmarksFragment? =
             fragmentManager.findFragmentByTag(TAG_BOOKMARK_FRAGMENT) as? BookmarksFragment
@@ -751,7 +749,6 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
             }
         }
 
-        val manager = childFragmentManager
         val tabsFragment = manager.findFragmentByTag(TAG_TABS_FRAGMENT) as? TabsFragment
         tabsFragment?.reinitializePreferences()
         val bookmarksFragment = manager.findFragmentByTag(TAG_BOOKMARK_FRAGMENT) as? BookmarksFragment
