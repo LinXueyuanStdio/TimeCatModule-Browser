@@ -74,10 +74,12 @@ class DisplaySettingsActivity : BaseSettingActivity() {
             getInitialCheck = { userPreferences.textReflowEnabled }
         ) { userPreferences.textReflowEnabled = it }
 
-        container.Next(
-            title = getString(R.string.theme),
-            text = themeOptions[userPreferences.useTheme]
-        ) { item -> showThemePicker { item.hint = it } }
+        // TODO 这个模块不能有自己的theme
+        // TODO theme是关于全局的一种行为，该模块自己设置自己的，可能导致和整体行为不一致
+//        container.Next(
+//            title = getString(R.string.theme),
+//            text = themeOptions[userPreferences.useTheme]
+//        ) { item -> showThemePicker { item.hint = it } }
 
         container.Slide(
             title = getString(R.string.title_text_size),

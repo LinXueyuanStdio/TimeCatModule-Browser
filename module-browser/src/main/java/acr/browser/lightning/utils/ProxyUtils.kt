@@ -17,6 +17,8 @@ import android.net.Uri
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.list.listItemsSingleChoice
+import com.timecat.module.browser.prepareShowInService
 import info.guardianproject.netcipher.proxy.OrbotHelper
 import info.guardianproject.netcipher.webkit.WebkitProxy
 import net.i2p.android.ui.I2PAndroidHelper
@@ -58,34 +60,30 @@ class ProxyUtils @Inject constructor() {
             if (i2p) {
                 mDeveloperPreferences!!.checkedForI2P = true
             }
-            val builder = AlertDialog.Builder(context)
             if (orbotInstalled && i2pInstalled) {
                 val proxyChoices = context.resources.getStringArray(R.array.proxy_choices_array)
-                builder.setTitle(context.resources.getString(R.string.http_proxy))
-                    .setSingleChoiceItems(proxyChoices, mUserPreferences!!.proxyChoice
-                    ) { dialog, which -> mUserPreferences!!.proxyChoice = which }
-                    .setPositiveButton(context.resources.getString(R.string.action_ok)
-                    ) { dialog, which ->
-                        if (mUserPreferences!!.proxyChoice != NO_PROXY) {
+                MaterialDialog(context).show {
+                    title(R.string.http_proxy)
+                    listItemsSingleChoice(items=proxyChoices.asList(), initialSelection = mUserPreferences!!.proxyChoice) {_,which,_->
+                        mUserPreferences!!.proxyChoice = which
+                        if (which != NO_PROXY) {
                             initializeProxy(context)
                         }
                     }
+                    positiveButton(R.string.action_ok)
+                }
             } else {
-                val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
-                    when (which) {
-                        DialogInterface.BUTTON_POSITIVE -> {
-                            mUserPreferences!!.proxyChoice = if (orbotInstalled) PROXY_ORBOT else PROXY_I2P
-                            initializeProxy(context)
-                        }
-                        DialogInterface.BUTTON_NEGATIVE -> mUserPreferences!!.proxyChoice = NO_PROXY
+                MaterialDialog(context).show {
+                    message(if (orbotInstalled) R.string.use_tor_prompt else R.string.use_i2p_prompt)
+                    positiveButton(R.string.yes){
+                        mUserPreferences!!.proxyChoice = if (orbotInstalled) PROXY_ORBOT else PROXY_I2P
+                        initializeProxy(context)
+                    }
+                    negativeButton(R.string.no) {
+                        mUserPreferences!!.proxyChoice = NO_PROXY
                     }
                 }
-                builder.setMessage(if (orbotInstalled) R.string.use_tor_prompt else R.string.use_i2p_prompt)
-                    .setPositiveButton(R.string.yes, dialogClickListener)
-                    .setNegativeButton(R.string.no, dialogClickListener)
             }
-            val dialog: Dialog = builder.show()
-            setDialogSize(context, dialog)
         }
     }
 
@@ -109,6 +107,7 @@ class ProxyUtils @Inject constructor() {
                 sI2PProxyInitialized = true
                 if (sI2PHelperBound && !mI2PHelper!!.isI2PAndroidRunning) {
                     MaterialDialog(context).show {
+                        prepareShowInService()
                         title(R.string.start_i2p_android)
                         message(R.string.would_you_like_to_start_i2p_android)
                         positiveButton(R.string.yes) {
@@ -175,6 +174,7 @@ class ProxyUtils @Inject constructor() {
                 sI2PHelperBound = true
                 if (sI2PProxyInitialized && !mI2PHelper!!.isI2PAndroidRunning) {
                     MaterialDialog(context).show {
+                        prepareShowInService()
                         title(R.string.start_i2p_android)
                         message(R.string.would_you_like_to_start_i2p_android)
                         positiveButton(R.string.yes) {
@@ -207,6 +207,7 @@ class ProxyUtils @Inject constructor() {
                     if (!ih.isI2PAndroidInstalled) {
                         choice = NO_PROXY
                         MaterialDialog(context).show {
+                            prepareShowInService()
                             title(R.string.start_i2p_android)
                             message(R.string.you_must_have_i2p_android)
                             positiveButton(R.string.yes) {

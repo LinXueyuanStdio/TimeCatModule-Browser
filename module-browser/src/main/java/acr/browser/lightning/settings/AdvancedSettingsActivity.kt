@@ -3,11 +3,11 @@ package acr.browser.lightning.settings
 import acr.browser.lightning.R
 import acr.browser.lightning.constant.TEXT_ENCODINGS
 import acr.browser.lightning.di.injector
-import acr.browser.lightning.dialog.BrowserDialog
 import acr.browser.lightning.preference.UserPreferences
 import android.view.ViewGroup
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.list.listItemsSingleChoice
 import com.timecat.layout.ui.business.form.Next
 import com.timecat.layout.ui.business.form.Switch
 import com.timecat.middle.setting.BaseSettingActivity
@@ -71,8 +71,8 @@ class AdvancedSettingsActivity : BaseSettingActivity() {
      * @param summaryUpdater the command which allows the summary to be updated.
      */
     private fun showRenderingDialogPicker(updateSummary: (String) -> Unit) {
-        val dialog = AlertDialog.Builder(this).apply {
-            setTitle(resources.getString(R.string.rendering_mode))
+        MaterialDialog(this).show {
+            title(R.string.rendering_mode)
 
             val choices = arrayOf(
                 getString(R.string.name_normal),
@@ -82,14 +82,12 @@ class AdvancedSettingsActivity : BaseSettingActivity() {
                 getString(R.string.name_increase_contrast)
             )
 
-            setSingleChoiceItems(choices, userPreferences.renderingMode) { _, which ->
+            listItemsSingleChoice(items = choices.asList(), initialSelection = userPreferences.renderingMode) { _, which, _ ->
                 userPreferences.renderingMode = which
                 updateSummary(getString(renderingModePreferenceToString(which)))
             }
-            setPositiveButton(resources.getString(R.string.action_ok), null)
-        }.show()
-
-        BrowserDialog.setDialogSize(this, dialog)
+            positiveButton(R.string.action_ok)
+        }
     }
 
     /**
@@ -98,19 +96,16 @@ class AdvancedSettingsActivity : BaseSettingActivity() {
      * @param summaryUpdater the command which allows the summary to be updated.
      */
     private fun showTextEncodingDialogPicker(updateSummary: (String) -> Unit) {
-        val dialog = AlertDialog.Builder(this).apply {
-            setTitle(resources.getString(R.string.text_encoding))
-
+        MaterialDialog(this).show {
+            title(R.string.text_encoding)
             val currentChoice = TEXT_ENCODINGS.indexOf(userPreferences.textEncoding)
 
-            setSingleChoiceItems(TEXT_ENCODINGS, currentChoice) { _, which ->
+            listItemsSingleChoice(items = TEXT_ENCODINGS.asList(), initialSelection = currentChoice) { _, which, _ ->
                 userPreferences.textEncoding = TEXT_ENCODINGS[which]
                 updateSummary(TEXT_ENCODINGS[which])
             }
-            setPositiveButton(resources.getString(R.string.action_ok), null)
-        }.show()
-
-        BrowserDialog.setDialogSize(this, dialog)
+            positiveButton(R.string.action_ok)
+        }
     }
 
     /**
@@ -119,18 +114,15 @@ class AdvancedSettingsActivity : BaseSettingActivity() {
      * @param summaryUpdater the command which allows the summary to be updated.
      */
     private fun showUrlBoxDialogPicker(updateSummary: (String) -> Unit) {
-        val dialog = AlertDialog.Builder(this).apply {
-            setTitle(resources.getString(R.string.url_contents))
+        MaterialDialog(this).show {
 
-            val array = resources.getStringArray(R.array.url_content_array)
-
-            setSingleChoiceItems(array, userPreferences.urlBoxContentChoice) { _, which ->
+            title(R.string.url_contents)
+            listItemsSingleChoice(R.array.url_content_array, initialSelection = userPreferences.urlBoxContentChoice) { _, which, _ ->
                 userPreferences.urlBoxContentChoice = which
                 updateSummary(urlBoxPreferenceToString(which))
             }
-            setPositiveButton(resources.getString(R.string.action_ok), null)
-        }.show()
-        BrowserDialog.setDialogSize(this, dialog)
+            positiveButton(R.string.action_ok)
+        }
     }
 
     /**

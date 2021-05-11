@@ -60,7 +60,6 @@ import android.text.TextUtils
 import android.text.TextWatcher
 import android.text.style.CharacterStyle
 import android.text.style.ParagraphStyle
-import android.util.AttributeSet
 import android.util.Log
 import android.view.*
 import android.view.View.*
@@ -78,7 +77,6 @@ import android.widget.TextView.OnEditorActionListener
 import androidx.annotation.ColorInt
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.*
 import androidx.appcompat.widget.Toolbar
@@ -96,6 +94,8 @@ import com.timecat.data.bmob.dao.UserDao
 import com.timecat.data.room.RoomClient
 import com.timecat.data.room.record.RoomRecord
 import com.timecat.identity.data.block.BLOCK_APP_WebApp
+import com.timecat.module.browser.KeyEventView
+import com.timecat.module.browser.prepareShowInService
 import io.reactivex.Completable
 import io.reactivex.Scheduler
 import io.reactivex.rxkotlin.subscribeBy
@@ -294,7 +294,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
 
     private lateinit var coordinator_layout: CoordinatorLayout
     private lateinit var drawer_layout: DrawerLayout
-    private lateinit var ui_layout: LinearLayout
+    private lateinit var ui_layout: KeyEventView
     private lateinit var toolbar_layout: LinearLayout
     private lateinit var tabs_toolbar_container: FrameLayout
     private lateinit var toolbar: androidx.appcompat.widget.Toolbar
@@ -309,7 +309,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
     private lateinit var right_drawer: FrameLayout
 
     @LayoutRes
-    protected fun layout(): Int = R.layout.browser_activity_main
+    protected fun layout(): Int = R.layout.browser_fragment_main
 
     protected open fun bindView(view: View) {
         coordinator_layout = view.findViewById(R.id.coordinator_layout)
@@ -530,6 +530,80 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
     }
 
     private fun registerKeyEvent() {
+        ui_layout.listener = object : KeyEventView.KeyEventListener {
+            override fun ctrl_F() {
+                // Search in page
+                findInPage()
+            }
+
+            override fun ctrl_T() {
+                // Open new tab
+                presenter?.newTab(homePageInitializer, true)
+            }
+
+            override fun ctrl_W() {
+                // Close current tab
+                tabsManager.let { presenter?.deleteTab(it.indexOfCurrentTab()) }
+            }
+
+            override fun ctrl_Q() {
+                // Close browser
+                closeBrowser()
+            }
+
+            override fun ctrl_R() {
+                // Refresh current tab
+                tabsManager.currentTab?.reload()
+            }
+
+            override fun ctrl_tab() {
+                tabsManager.let {
+                    // Go forward one tab
+                    val nextIndex = if (it.indexOfCurrentTab() < it.last()) {
+                        it.indexOfCurrentTab() + 1
+                    } else {
+                        0
+                    }
+
+                    presenter?.tabChanged(nextIndex)
+                }
+            }
+
+            override fun ctrl_shift_tab() {
+                tabsManager.let {
+                    // Go back one tab
+                    val nextIndex = if (it.indexOfCurrentTab() > 0) {
+                        it.indexOfCurrentTab() - 1
+                    } else {
+                        it.last()
+                    }
+
+                    presenter?.tabChanged(nextIndex)
+                }
+            }
+
+            override fun ctrl_shift_P() {
+                startActivity(IncognitoActivity.createIntent(context()))
+            }
+
+            override fun search() {
+                // Highlight search field
+                searchView?.requestFocus()
+                searchView?.selectAll()
+            }
+
+            override fun alt_tab(number: Int) {
+                tabsManager.let {
+                    val nextIndex =
+                        if (number > it.last() + KeyEvent.KEYCODE_1 || number == KeyEvent.KEYCODE_0) {
+                            it.last()
+                        } else {
+                            number - KeyEvent.KEYCODE_1
+                        }
+                    presenter?.tabChanged(nextIndex)
+                }
+            }
+        }
         v.setOnKeyListener { v, keyCode, event ->
             if (event?.action == KeyEvent.ACTION_DOWN) {
                 if (keyCode == KeyEvent.KEYCODE_ENTER) {
@@ -783,100 +857,6 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         }
     }
 
-    inner class KeyEventView @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyleAttr: Int = 0
-    ) : LinearLayout(context, attrs, defStyleAttr) {
-        override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-            // Keyboard shortcuts
-            if (event.action == KeyEvent.ACTION_DOWN) {
-                when {
-                    event.isCtrlPressed -> when (event.keyCode) {
-                        KeyEvent.KEYCODE_F -> {
-                            // Search in page
-                            findInPage()
-                            return true
-                        }
-                        KeyEvent.KEYCODE_T -> {
-                            // Open new tab
-                            presenter?.newTab(homePageInitializer, true)
-                            return true
-                        }
-                        KeyEvent.KEYCODE_W -> {
-                            // Close current tab
-                            tabsManager.let { presenter?.deleteTab(it.indexOfCurrentTab()) }
-                            return true
-                        }
-                        KeyEvent.KEYCODE_Q -> {
-                            // Close browser
-                            closeBrowser()
-                            return true
-                        }
-                        KeyEvent.KEYCODE_R -> {
-                            // Refresh current tab
-                            tabsManager.currentTab?.reload()
-                            return true
-                        }
-                        KeyEvent.KEYCODE_TAB -> {
-                            tabsManager.let {
-                                val nextIndex = if (event.isShiftPressed) {
-                                    // Go back one tab
-                                    if (it.indexOfCurrentTab() > 0) {
-                                        it.indexOfCurrentTab() - 1
-                                    } else {
-                                        it.last()
-                                    }
-                                } else {
-                                    // Go forward one tab
-                                    if (it.indexOfCurrentTab() < it.last()) {
-                                        it.indexOfCurrentTab() + 1
-                                    } else {
-                                        0
-                                    }
-                                }
-
-                                presenter?.tabChanged(nextIndex)
-                            }
-
-                            return true
-                        }
-                    }
-                    event.keyCode == KeyEvent.KEYCODE_SEARCH -> {
-                        // Highlight search field
-                        searchView?.requestFocus()
-                        searchView?.selectAll()
-                        return true
-                    }
-                    event.isAltPressed -> // Alt + tab number
-                        tabsManager.let {
-                            if (KeyEvent.KEYCODE_0 <= event.keyCode && event.keyCode <= KeyEvent.KEYCODE_9) {
-                                val nextIndex =
-                                    if (event.keyCode > it.last() + KeyEvent.KEYCODE_1 || event.keyCode == KeyEvent.KEYCODE_0) {
-                                        it.last()
-                                    } else {
-                                        event.keyCode - KeyEvent.KEYCODE_1
-                                    }
-                                presenter?.tabChanged(nextIndex)
-                                return true
-                            }
-                        }
-                }
-            }
-            if (event.action == KeyEvent.ACTION_DOWN && event.isCtrlPressed) {
-                when (event.keyCode) {
-                    KeyEvent.KEYCODE_P ->
-                        // Open a new private window
-                        if (event.isShiftPressed) {
-                            startActivity(IncognitoActivity.createIntent(context))
-                            return true
-                        }
-                }
-            }
-            return super.dispatchKeyEvent(event)
-        }
-    }
-
     private fun toast(msg: String) {
         Toast.makeText(context(), msg, Toast.LENGTH_LONG).show()
     }
@@ -1093,14 +1073,14 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         // }, 300);
     }
 
-    override fun showBlockedLocalFileDialog(onPositiveClick: Function0<Unit>) =
-        AlertDialog.Builder(context()).apply {
-            setCancelable(true)
-            setTitle(R.string.title_warning)
-            setMessage(R.string.message_blocked_local)
-            setNegativeButton(android.R.string.cancel, null)
-            setPositiveButton(R.string.action_open) { _, _ -> onPositiveClick.invoke() }
-        }.resizeAndShow()
+    override fun showBlockedLocalFileDialog(onPositiveClick: () -> Unit) {
+        MaterialDialog(context()).show {
+            title(R.string.title_warning)
+            message(R.string.message_blocked_local)
+            negativeButton(android.R.string.cancel)
+            positiveButton(R.string.action_open) { onPositiveClick() }
+        }
+    }
 
     override fun showSnackbar(@StringRes resource: Int) = Snackbar.make(v, resource, Snackbar.LENGTH_SHORT).show()
 
@@ -2104,6 +2084,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                     if (UserDao.getCurrentUser() != null) {
                         if (DEF.config().getBoolean(IS_FIRST_COLLECTURL, true)) {
                             MaterialDialog(context()).show {
+                                prepareShowInService()
                                 message(text = "网址不同于文章，相同网址可多次进行收藏，且不会显示收藏状态。")
                                 positiveButton(text = "知道了") {
                                     DEF.config().save(IS_FIRST_COLLECTURL, false)

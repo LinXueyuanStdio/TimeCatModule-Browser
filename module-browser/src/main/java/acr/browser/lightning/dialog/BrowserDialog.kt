@@ -21,7 +21,6 @@ import acr.browser.lightning.extensions.inflater
 import acr.browser.lightning.list.RecyclerViewDialogItemAdapter
 import acr.browser.lightning.list.RecyclerViewStringAdapter
 import acr.browser.lightning.utils.DeviceUtils
-import android.app.Activity
 import android.app.Dialog
 import android.content.Context
 import android.view.LayoutInflater
@@ -32,6 +31,11 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.callbacks.onCancel
+import com.afollestad.materialdialogs.customview.customView
+import com.afollestad.materialdialogs.input.input
+import com.timecat.module.browser.prepareShowInService
 
 object BrowserDialog {
 
@@ -41,10 +45,8 @@ object BrowserDialog {
         @StringRes title: Int,
         vararg items: DialogItem
     ) = show(context, context.getString(title), *items)
-    
-    fun showWithIcons(context: Context, title: String?, vararg items: DialogItem) {
-        val builder = AlertDialog.Builder(context)
 
+    fun showWithIcons(context: Context, title: String?, vararg items: DialogItem) {
         val layout = context.inflater.inflate(R.layout.browser_list_dialog, null)
 
         val titleView = layout.findViewById<TextView>(R.id.dialog_title)
@@ -64,21 +66,20 @@ object BrowserDialog {
             setHasFixedSize(true)
         }
 
-        builder.setView(layout)
-
-        val dialog = builder.show()
-
-        setDialogSize(context, dialog)
-
-        adapter.onItemClickListener = { item ->
-            item.onClick()
-            dialog.dismiss()
+        MaterialDialog(context).show {
+            prepareShowInService()
+            cancelable(true)
+            customView(view = layout)
+            adapter.onItemClickListener = { item ->
+                item.onClick()
+                dismiss()
+            }
         }
+
     }
 
     @JvmStatic
     fun show(context: Context, title: String?, vararg items: DialogItem) {
-        val builder = AlertDialog.Builder(context)
 
         val layout = context.inflater.inflate(R.layout.browser_list_dialog, null)
 
@@ -99,15 +100,14 @@ object BrowserDialog {
             setHasFixedSize(true)
         }
 
-        builder.setView(layout)
-
-        val dialog = builder.show()
-
-        setDialogSize(context, dialog)
-
-        adapter.onItemClickListener = { item ->
-            item.onClick()
-            dialog.dismiss()
+        MaterialDialog(context).show {
+            prepareShowInService()
+            cancelable(true)
+            customView(view = layout)
+            adapter.onItemClickListener = { item ->
+                item.onClick()
+                dismiss()
+            }
         }
     }
 
@@ -126,15 +126,15 @@ object BrowserDialog {
         } else {
             context.getString(message)
         }
-        val dialog = AlertDialog.Builder(context).apply {
-            setTitle(title)
-            setMessage(messageValue)
-            setOnCancelListener { onCancel() }
-            setPositiveButton(positiveButton.title) { _, _ -> positiveButton.onClick() }
-            setNegativeButton(negativeButton.title) { _, _ -> negativeButton.onClick() }
-        }.show()
-
-        setDialogSize(context, dialog)
+        MaterialDialog(context).show {
+            prepareShowInService()
+            cancelable(true)
+            title(title)
+            message(text = messageValue)
+            onCancel { onCancel() }
+            positiveButton(positiveButton.title) { positiveButton.onClick() }
+            negativeButton(negativeButton.title) { negativeButton.onClick() }
+        }
     }
 
     @JvmStatic
@@ -155,22 +155,14 @@ object BrowserDialog {
         @StringRes action: Int,
         textInputListener: (String) -> Unit
     ) {
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.browser_dialog_edit_text, null)
-        val editText = dialogView.findViewById<EditText>(R.id.dialog_edit_text)
-
-        editText.setHint(hint)
-        if (currentText != null) {
-            editText.setText(currentText)
+        MaterialDialog(context).show {
+            prepareShowInService()
+            title(title)
+            positiveButton(action)
+            input(hint = context.getString(hint), prefill = currentText) { _, text->
+                textInputListener(text.toString())
+            }
         }
-
-        val editorDialog = AlertDialog.Builder(context)
-            .setTitle(title)
-            .setView(dialogView)
-            .setPositiveButton(action
-            ) { _, _ -> textInputListener(editText.text.toString()) }
-
-        val dialog = editorDialog.show()
-        setDialogSize(context, dialog)
     }
 
     @JvmStatic
@@ -184,18 +176,4 @@ object BrowserDialog {
         val window = dialog.window
         window?.setLayout(maxWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
     }
-
-    /**
-     * Show the custom dialog with the custom builder arguments applied.
-     */
-    fun showCustomDialog(context: Context?, block: AlertDialog.Builder.(Context) -> Unit) {
-        context?.let {
-            AlertDialog.Builder(context).apply {
-                block(it)
-                val dialog = show()
-                setDialogSize(it, dialog)
-            }
-        }
-    }
-
 }

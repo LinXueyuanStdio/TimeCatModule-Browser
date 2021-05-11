@@ -6,7 +6,6 @@ import acr.browser.lightning.adblock.allowlist.AllowListModel
 import acr.browser.lightning.constant.FILE
 import acr.browser.lightning.controller.UIController
 import acr.browser.lightning.di.injector
-import acr.browser.lightning.extensions.resizeAndShow
 import acr.browser.lightning.extensions.snackbar
 import acr.browser.lightning.log.Logger
 import acr.browser.lightning.preference.UserPreferences
@@ -27,9 +26,12 @@ import android.webkit.*
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.callbacks.onDismiss
+import com.afollestad.materialdialogs.customview.customView
 import com.anthonycr.mezzanine.MezzanineGenerator
+import com.timecat.module.browser.prepareShowInService
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import java.io.ByteArrayInputStream
@@ -156,29 +158,31 @@ class LightningWebClient(
     }
 
     override fun onReceivedHttpAuthRequest(view: WebView, handler: HttpAuthHandler,
-                                           host: String, realm: String) =
-        AlertDialog.Builder(context).apply {
-            val dialogView = LayoutInflater.from(context).inflate(R.layout.browser_dialog_auth_request, null)
+                                           host: String, realm: String) {
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.browser_dialog_auth_request, null)
 
-            val realmLabel = dialogView.findViewById<TextView>(R.id.auth_request_realm_textview)
-            val name = dialogView.findViewById<EditText>(R.id.auth_request_username_edittext)
-            val password = dialogView.findViewById<EditText>(R.id.auth_request_password_edittext)
+        val realmLabel = dialogView.findViewById<TextView>(R.id.auth_request_realm_textview)
+        val name = dialogView.findViewById<EditText>(R.id.auth_request_username_edittext)
+        val password = dialogView.findViewById<EditText>(R.id.auth_request_password_edittext)
 
-            realmLabel.text = context.getString(R.string.label_realm, realm)
+        realmLabel.text = context.getString(R.string.label_realm, realm)
 
-            setView(dialogView)
-            setTitle(R.string.title_sign_in)
-            setCancelable(true)
-            setPositiveButton(R.string.title_sign_in) { _, _ ->
+        MaterialDialog(context).show {
+            prepareShowInService()
+            customView(view = dialogView)
+            title(R.string.title_sign_in)
+            cancelable(true)
+            positiveButton(R.string.title_sign_in) {
                 val user = name.text.toString()
                 val pass = password.text.toString()
                 handler.proceed(user.trim(), pass.trim())
                 logger.log(TAG, "Attempting HTTP Authentication")
             }
-            setNegativeButton(R.string.action_cancel) { _, _ ->
+            negativeButton(R.string.action_cancel) {
                 handler.cancel()
             }
-        }.resizeAndShow()
+        }
+    }
 
     override fun onScaleChanged(view: WebView, oldScale: Float, newScale: Float) {
         if (view.isShown && lightningView.userPreferences.textReflowEnabled) {
@@ -211,42 +215,42 @@ class LightningWebClient(
             stringBuilder.append(" - ").append(context.getString(messageCode)).append('\n')
         }
         val alertMessage = context.getString(R.string.message_insecure_connection, stringBuilder.toString())
-
-        AlertDialog.Builder(context).apply {
-            val view = LayoutInflater.from(context).inflate(R.layout.browser_dialog_ssl_warning, null)
-            val dontAskAgain = view.findViewById<CheckBox>(R.id.checkBoxDontAskAgain)
-            setTitle(context.getString(R.string.title_warning))
-            setMessage(alertMessage)
-            setCancelable(true)
-            setView(view)
-            setOnCancelListener { handler.cancel() }
-            setPositiveButton(context.getString(R.string.action_yes)) { _, _ ->
+        val view = LayoutInflater.from(context).inflate(R.layout.browser_dialog_ssl_warning, null)
+        val dontAskAgain = view.findViewById<CheckBox>(R.id.checkBoxDontAskAgain)
+        MaterialDialog(context).show {
+            prepareShowInService()
+            title(R.string.title_warning)
+            message(text = alertMessage)
+            cancelable(true)
+            customView(view = view)
+            onDismiss {
+                handler.cancel()
+            }
+            positiveButton(R.string.action_yes) {
                 if (dontAskAgain.isChecked) {
                     sslWarningPreferences.rememberBehaviorForDomain(webView.url, SslWarningPreferences.Behavior.PROCEED)
                 }
                 handler.proceed()
             }
-            setNegativeButton(context.getString(R.string.action_no)) { _, _ ->
+            negativeButton(R.string.action_no) {
                 if (dontAskAgain.isChecked) {
                     sslWarningPreferences.rememberBehaviorForDomain(webView.url, SslWarningPreferences.Behavior.CANCEL)
                 }
                 handler.cancel()
             }
-        }.resizeAndShow()
+            setOnCancelListener { handler.cancel() }
+        }
     }
 
-    override fun onFormResubmission(view: WebView, dontResend: Message, resend: Message) =
-        AlertDialog.Builder(context).apply {
-            setTitle(context.getString(R.string.title_form_resubmission))
-            setMessage(context.getString(R.string.message_form_resubmission))
-            setCancelable(true)
-            setPositiveButton(context.getString(R.string.action_yes)) { _, _ ->
-                resend.sendToTarget()
-            }
-            setNegativeButton(context.getString(R.string.action_no)) { _, _ ->
-                dontResend.sendToTarget()
-            }
-        }.resizeAndShow()
+    override fun onFormResubmission(view: WebView, dontResend: Message, resend: Message) {
+        MaterialDialog(context).show {
+            prepareShowInService()
+            title(R.string.title_form_resubmission)
+            message(R.string.message_form_resubmission)
+            negativeButton(R.string.action_no) { dontResend.sendToTarget() }
+            positiveButton(R.string.action_yes) { resend.sendToTarget() }
+        }
+    }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean =

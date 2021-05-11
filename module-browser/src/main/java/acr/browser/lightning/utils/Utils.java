@@ -6,7 +6,6 @@ package acr.browser.lightning.utils;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -24,6 +23,8 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.webkit.URLUtil;
 
+import com.timecat.module.browser.DialogExtKt;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -35,12 +36,10 @@ import java.util.Date;
 import acr.browser.lightning.R;
 import acr.browser.lightning.constant.Constants;
 import acr.browser.lightning.database.HistoryEntry;
-import acr.browser.lightning.dialog.BrowserDialog;
 import acr.browser.lightning.extensions.ActivityExtensions;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
-import androidx.appcompat.app.AlertDialog;
 
 public final class Utils {
 
@@ -79,19 +78,7 @@ public final class Utils {
      * @param message  the message of the dialog.
      */
     public static void createInformativeDialog(@NonNull Activity activity, @StringRes int title, @StringRes int message) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle(title);
-        builder.setMessage(message)
-            .setCancelable(true)
-            .setPositiveButton(activity.getResources().getString(R.string.action_ok),
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {
-                    }
-                });
-        AlertDialog alert = builder.create();
-        alert.show();
-        BrowserDialog.setDialogSize(activity, alert);
+        DialogExtKt.createInformativeDialog(activity, title, message);
     }
 
     /**

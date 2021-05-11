@@ -5,19 +5,19 @@ import acr.browser.lightning.constant.SCHEME_BOOKMARKS
 import acr.browser.lightning.constant.SCHEME_HOMEPAGE
 import acr.browser.lightning.di.DiskScheduler
 import acr.browser.lightning.di.MainScheduler
-import acr.browser.lightning.extensions.resizeAndShow
 import acr.browser.lightning.html.HtmlPageFactory
 import acr.browser.lightning.html.bookmark.BookmarkPageFactory
 import acr.browser.lightning.html.download.DownloadPageFactory
 import acr.browser.lightning.html.history.HistoryPageFactory
 import acr.browser.lightning.html.homepage.HomePageFactory
 import acr.browser.lightning.preference.UserPreferences
-import android.app.Activity
 import android.content.Context
 import android.os.Bundle
 import android.os.Message
 import android.webkit.WebView
-import androidx.appcompat.app.AlertDialog
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.callbacks.onDismiss
+import com.timecat.module.browser.prepareShowInService
 import io.reactivex.Scheduler
 import io.reactivex.rxkotlin.subscribeBy
 import javax.inject.Inject
@@ -50,9 +50,9 @@ class UrlInitializer(private val url: String) : TabInitializer {
  * An initializer that displays the page set as the user's homepage preference.
  */
 class HomePageInitializer @Inject constructor(
-        private val userPreferences: UserPreferences,
-        private val startPageInitializer: StartPageInitializer,
-        private val bookmarkPageInitializer: BookmarkPageInitializer
+    private val userPreferences: UserPreferences,
+    private val startPageInitializer: StartPageInitializer,
+    private val bookmarkPageInitializer: BookmarkPageInitializer
 ) : TabInitializer {
 
     override fun initialize(webView: WebView, headers: Map<String, String>) {
@@ -71,53 +71,53 @@ class HomePageInitializer @Inject constructor(
  * An initializer that displays the start page.
  */
 class StartPageInitializer @Inject constructor(
-        homePageFactory: HomePageFactory,
-        @DiskScheduler diskScheduler: Scheduler,
-        @MainScheduler foregroundScheduler: Scheduler
+    homePageFactory: HomePageFactory,
+    @DiskScheduler diskScheduler: Scheduler,
+    @MainScheduler foregroundScheduler: Scheduler
 ) : HtmlPageFactoryInitializer(homePageFactory, diskScheduler, foregroundScheduler)
 
 /**
  * An initializer that displays the bookmark page.
  */
 class BookmarkPageInitializer @Inject constructor(
-        bookmarkPageFactory: BookmarkPageFactory,
-        @DiskScheduler diskScheduler: Scheduler,
-        @MainScheduler foregroundScheduler: Scheduler
+    bookmarkPageFactory: BookmarkPageFactory,
+    @DiskScheduler diskScheduler: Scheduler,
+    @MainScheduler foregroundScheduler: Scheduler
 ) : HtmlPageFactoryInitializer(bookmarkPageFactory, diskScheduler, foregroundScheduler)
 
 /**
  * An initializer that displays the download page.
  */
 class DownloadPageInitializer @Inject constructor(
-        downloadPageFactory: DownloadPageFactory,
-        @DiskScheduler diskScheduler: Scheduler,
-        @MainScheduler foregroundScheduler: Scheduler
+    downloadPageFactory: DownloadPageFactory,
+    @DiskScheduler diskScheduler: Scheduler,
+    @MainScheduler foregroundScheduler: Scheduler
 ) : HtmlPageFactoryInitializer(downloadPageFactory, diskScheduler, foregroundScheduler)
 
 /**
  * An initializer that displays the history page.
  */
 class HistoryPageInitializer @Inject constructor(
-        historyPageFactory: HistoryPageFactory,
-        @DiskScheduler diskScheduler: Scheduler,
-        @MainScheduler foregroundScheduler: Scheduler
+    historyPageFactory: HistoryPageFactory,
+    @DiskScheduler diskScheduler: Scheduler,
+    @MainScheduler foregroundScheduler: Scheduler
 ) : HtmlPageFactoryInitializer(historyPageFactory, diskScheduler, foregroundScheduler)
 
 /**
  * An initializer that loads the url built by the [HtmlPageFactory].
  */
 abstract class HtmlPageFactoryInitializer(
-        private val htmlPageFactory: HtmlPageFactory,
-        @DiskScheduler private val diskScheduler: Scheduler,
-        @MainScheduler private val foregroundScheduler: Scheduler
+    private val htmlPageFactory: HtmlPageFactory,
+    @DiskScheduler private val diskScheduler: Scheduler,
+    @MainScheduler private val foregroundScheduler: Scheduler
 ) : TabInitializer {
 
     override fun initialize(webView: WebView, headers: Map<String, String>) {
         htmlPageFactory
-                .buildPage()
-                .subscribeOn(diskScheduler)
-                .observeOn(foregroundScheduler)
-                .subscribeBy(onSuccess = { webView.loadUrl(it, headers) })
+            .buildPage()
+            .subscribeOn(diskScheduler)
+            .observeOn(foregroundScheduler)
+            .subscribeBy(onSuccess = { webView.loadUrl(it, headers) })
     }
 
 }
@@ -162,24 +162,25 @@ class NoOpInitializer : TabInitializer {
  * browser via an intent.
  */
 class PermissionInitializer(
-        private val url: String,
-        private val activity: Context,
-        private val homePageInitializer: HomePageInitializer
+    private val url: String,
+    private val context: Context,
+    private val homePageInitializer: HomePageInitializer
 ) : TabInitializer {
 
     override fun initialize(webView: WebView, headers: Map<String, String>) {
-        AlertDialog.Builder(activity).apply {
-            setTitle(R.string.title_warning)
-            setMessage(R.string.message_blocked_local)
-            setCancelable(false)
-            setOnDismissListener {
+        MaterialDialog(context).show {
+            prepareShowInService()
+            title(R.string.title_warning)
+            message(R.string.message_blocked_local)
+            cancelable(false)
+            onDismiss {
                 homePageInitializer.initialize(webView, headers)
             }
-            setNegativeButton(android.R.string.cancel, null)
-            setPositiveButton(R.string.action_open) { _, _ ->
+            negativeButton(android.R.string.cancel)
+            positiveButton(R.string.action_open) {
                 UrlInitializer(url).initialize(webView, headers)
             }
-        }.resizeAndShow()
+        }
     }
 
 }

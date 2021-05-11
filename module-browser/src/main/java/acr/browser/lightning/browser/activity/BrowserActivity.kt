@@ -90,6 +90,7 @@ import com.timecat.data.bmob.dao.UserDao
 import com.timecat.data.room.RoomClient
 import com.timecat.data.room.record.RoomRecord
 import com.timecat.identity.data.block.BLOCK_APP_WebApp
+import com.timecat.module.browser.prepareShowInService
 import io.reactivex.Completable
 import io.reactivex.Scheduler
 import io.reactivex.rxkotlin.subscribeBy
@@ -921,6 +922,7 @@ abstract class BrowserActivity : ThemableBrowserActivity(), BrowserView, UIContr
                     if (UserDao.getCurrentUser() != null) {
                         if (DEF.config().getBoolean(IS_FIRST_COLLECTURL, true)) {
                             MaterialDialog(this).show {
+                                prepareShowInService()
                                 message(text = "网址不同于文章，相同网址可多次进行收藏，且不会显示收藏状态。")
                                 positiveButton(text = "知道了") {
                                     DEF.config().save(IS_FIRST_COLLECTURL, false)
@@ -1158,14 +1160,14 @@ abstract class BrowserActivity : ThemableBrowserActivity(), BrowserView, UIContr
         // }, 300);
     }
 
-    override fun showBlockedLocalFileDialog(onPositiveClick: Function0<Unit>) =
-        AlertDialog.Builder(this).apply {
-            setCancelable(true)
-            setTitle(R.string.title_warning)
-            setMessage(R.string.message_blocked_local)
-            setNegativeButton(android.R.string.cancel, null)
-            setPositiveButton(R.string.action_open) { _, _ -> onPositiveClick.invoke() }
-        }.resizeAndShow()
+    override fun showBlockedLocalFileDialog(onPositiveClick: () -> Unit) {
+        MaterialDialog(this).show {
+            title(R.string.title_warning)
+            message(R.string.message_blocked_local)
+            negativeButton(android.R.string.cancel)
+            positiveButton(R.string.action_open) { onPositiveClick() }
+        }
+    }
 
     override fun showSnackbar(@StringRes resource: Int) = snackbar(resource)
 

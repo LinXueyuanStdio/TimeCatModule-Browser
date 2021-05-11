@@ -24,6 +24,9 @@ import android.webkit.URLUtil
 import android.widget.EditText
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.customview.customView
+import com.afollestad.materialdialogs.list.listItemsSingleChoice
 import com.timecat.layout.ui.business.form.Next
 import com.timecat.layout.ui.business.form.Switch
 import com.timecat.middle.setting.BaseSettingActivity
@@ -110,12 +113,12 @@ class GeneralSettingsActivity : BaseSettingActivity() {
     }
 
     private fun showProxyPicker(updateSummary: (String) -> Unit) {
-        BrowserDialog.showCustomDialog(this) {
-            setTitle(R.string.http_proxy)
-            setSingleChoiceItems(proxyChoices, userPreferences.proxyChoice) { _, which ->
-                updateProxyChoice(which, it, updateSummary)
+        MaterialDialog(this).show {
+            title(R.string.http_proxy)
+            positiveButton(R.string.action_ok)
+            listItemsSingleChoice(items = proxyChoices.asList(), initialSelection = userPreferences.proxyChoice) { _, idx, _ ->
+                updateProxyChoice(idx, context, updateSummary)
             }
-            setPositiveButton(R.string.action_ok, null)
         }
     }
 
@@ -148,10 +151,9 @@ class GeneralSettingsActivity : BaseSettingActivity() {
         eProxyHost.text = userPreferences.proxyHost
         eProxyPort.text = Integer.toString(userPreferences.proxyPort)
 
-        BrowserDialog.showCustomDialog(context) {
-            setTitle(R.string.manual_proxy)
-            setView(v)
-            setPositiveButton(R.string.action_ok) { _, _ ->
+        MaterialDialog(this).show {
+            title(R.string.manual_proxy)
+            positiveButton(R.string.action_ok) {
                 val proxyHost = eProxyHost.text.toString()
                 val proxyPort = try {
                     // Try/Catch in case the user types an empty string or a number
@@ -165,6 +167,7 @@ class GeneralSettingsActivity : BaseSettingActivity() {
                 userPreferences.proxyPort = proxyPort
                 updateSummary("$proxyHost:$proxyPort")
             }
+            customView(view = v)
         }
     }
 
@@ -177,9 +180,10 @@ class GeneralSettingsActivity : BaseSettingActivity() {
     }
 
     private fun showUserAgentChooserDialog(updateSummary: (String) -> Unit) {
-        BrowserDialog.showCustomDialog(this) {
-            setTitle(resources.getString(R.string.title_user_agent))
-            setSingleChoiceItems(R.array.user_agent, userPreferences.userAgentChoice - 1) { _, which ->
+        MaterialDialog(this).show {
+            title(R.string.title_user_agent)
+            positiveButton(R.string.action_ok)
+            listItemsSingleChoice(R.array.user_agent, initialSelection = userPreferences.userAgentChoice - 1) { _, which, _ ->
                 userPreferences.userAgentChoice = which + 1
                 updateSummary(choiceToUserAgent(userPreferences.userAgentChoice))
                 when (which) {
@@ -190,7 +194,6 @@ class GeneralSettingsActivity : BaseSettingActivity() {
                     }
                 }
             }
-            setPositiveButton(resources.getString(R.string.action_ok), null)
         }
     }
 
@@ -202,20 +205,19 @@ class GeneralSettingsActivity : BaseSettingActivity() {
             R.string.action_ok) { s ->
             userPreferences.userAgentString = s
             updateSummary(getString(R.string.agent_custom))
-
         }
     }
 
     private fun showDownloadLocationDialog(updateSummary: (String) -> Unit) {
-        BrowserDialog.showCustomDialog(this) {
-            setTitle(resources.getString(R.string.title_download_location))
+        MaterialDialog(this).show {
+            title(R.string.title_download_location)
+            positiveButton(R.string.action_ok)
             val n: Int = if (userPreferences.downloadDirectory.contains(Environment.DIRECTORY_DOWNLOADS)) {
                 0
             } else {
                 1
             }
-
-            setSingleChoiceItems(R.array.download_folder, n) { _, which ->
+            listItemsSingleChoice(R.array.download_folder, initialSelection = n) { _, which, _ ->
                 when (which) {
                     0 -> {
                         userPreferences.downloadDirectory = FileUtils.DEFAULT_DOWNLOAD_PATH
@@ -226,7 +228,6 @@ class GeneralSettingsActivity : BaseSettingActivity() {
                     }
                 }
             }
-            setPositiveButton(resources.getString(R.string.action_ok), null)
         }
     }
 
@@ -242,16 +243,15 @@ class GeneralSettingsActivity : BaseSettingActivity() {
         getDownload.addTextChangedListener(DownloadLocationTextWatcher(getDownload, errorColor, regularColor))
         getDownload.setText(userPreferences.downloadDirectory)
 
-        BrowserDialog.showCustomDialog(this) {
-            setTitle(R.string.title_download_location)
-            setView(dialogView)
-            setPositiveButton(R.string.action_ok) { _, _ ->
+        MaterialDialog(this).show {
+            title(R.string.title_download_location)
+            customView(view = dialogView)
+            positiveButton(R.string.action_ok) {
                 var text = getDownload.text.toString()
                 text = FileUtils.addNecessarySlashes(text)
                 userPreferences.downloadDirectory = text
                 updateSummary(text)
             }
-
         }
     }
 
@@ -282,16 +282,16 @@ class GeneralSettingsActivity : BaseSettingActivity() {
     }
 
     private fun showHomePageDialog(updateSummary: (String) -> Unit) {
-        BrowserDialog.showCustomDialog(this) {
-            setTitle(R.string.home)
+        MaterialDialog(this).show {
+            title(R.string.home)
+            positiveButton(R.string.action_ok)
             val n = when (userPreferences.homepage) {
                 SCHEME_HOMEPAGE -> 0
                 SCHEME_BLANK -> 1
                 SCHEME_BOOKMARKS -> 2
                 else -> 3
             }
-
-            setSingleChoiceItems(R.array.homepage, n) { _, which ->
+            listItemsSingleChoice(R.array.homepage, initialSelection = n) { _, which, _ ->
                 when (which) {
                     0 -> {
                         userPreferences.homepage = SCHEME_HOMEPAGE
@@ -310,7 +310,6 @@ class GeneralSettingsActivity : BaseSettingActivity() {
                     }
                 }
             }
-            setPositiveButton(resources.getString(R.string.action_ok), null)
         }
     }
 
@@ -343,8 +342,9 @@ class GeneralSettingsActivity : BaseSettingActivity() {
         searchEngines.map { getString(it.titleRes) }.toTypedArray()
 
     private fun showSearchProviderDialog(updateSummary: (String) -> Unit) {
-        BrowserDialog.showCustomDialog(this) {
-            setTitle(resources.getString(R.string.title_search_engine))
+        MaterialDialog(this).show {
+            title(R.string.title_search_engine)
+            positiveButton(R.string.action_ok)
 
             val searchEngineList = searchEngineProvider.provideAllSearchEngines()
 
@@ -352,7 +352,7 @@ class GeneralSettingsActivity : BaseSettingActivity() {
 
             val n = userPreferences.searchChoice
 
-            setSingleChoiceItems(chars, n) { _, which ->
+            listItemsSingleChoice(items = chars.asList(), initialSelection = n) { _, which, _ ->
                 val searchEngine = searchEngineList[which]
 
                 // Store the search engine preference
@@ -367,7 +367,6 @@ class GeneralSettingsActivity : BaseSettingActivity() {
                     updateSummary(getSearchEngineSummary(searchEngine))
                 }
             }
-            setPositiveButton(R.string.action_ok, null)
         }
     }
 
@@ -394,8 +393,9 @@ class GeneralSettingsActivity : BaseSettingActivity() {
         }
 
     private fun showSearchSuggestionsDialog(updateSummary: (String) -> Unit) {
-        BrowserDialog.showCustomDialog(this) {
-            setTitle(resources.getString(R.string.search_suggestions))
+        MaterialDialog(this).show {
+            title(R.string.search_suggestions)
+            positiveButton(R.string.action_ok)
 
             val currentChoice = when (Suggestions.from(userPreferences.searchSuggestionChoice)) {
                 Suggestions.GOOGLE -> 0
@@ -404,8 +404,7 @@ class GeneralSettingsActivity : BaseSettingActivity() {
                 Suggestions.NAVER -> 3
                 Suggestions.NONE -> 3
             }
-
-            setSingleChoiceItems(R.array.suggestions, currentChoice) { _, which ->
+            listItemsSingleChoice(R.array.suggestions, initialSelection = currentChoice) { _, which, _ ->
                 val suggestionsProvider = when (which) {
                     0 -> Suggestions.GOOGLE
                     1 -> Suggestions.DUCK
@@ -417,20 +416,6 @@ class GeneralSettingsActivity : BaseSettingActivity() {
                 userPreferences.searchSuggestionChoice = suggestionsProvider.index
                 updateSummary(searchSuggestionChoiceToTitle(suggestionsProvider))
             }
-            setPositiveButton(resources.getString(R.string.action_ok), null)
         }
-    }
-
-    companion object {
-        private const val SETTINGS_PROXY = "proxy"
-        private const val SETTINGS_ADS = "cb_ads"
-        private const val SETTINGS_IMAGES = "cb_images"
-        private const val SETTINGS_JAVASCRIPT = "cb_javascript"
-        private const val SETTINGS_COLOR_MODE = "cb_colormode"
-        private const val SETTINGS_USER_AGENT = "agent"
-        private const val SETTINGS_DOWNLOAD = "download"
-        private const val SETTINGS_HOME = "home"
-        private const val SETTINGS_SEARCH_ENGINE = "search"
-        private const val SETTINGS_SUGGESTIONS = "suggestions_choice"
     }
 }

@@ -6,18 +6,16 @@ package acr.browser.lightning.download
 import acr.browser.lightning.BrowserApp.Companion.appComponent
 import acr.browser.lightning.R
 import acr.browser.lightning.database.downloads.DownloadsRepository
-import acr.browser.lightning.dialog.BrowserDialog.setDialogSize
 import acr.browser.lightning.log.Logger
 import acr.browser.lightning.preference.UserPreferences
-import android.app.Dialog
 import android.content.Context
-import android.content.DialogInterface
 import android.text.format.Formatter
 import android.webkit.DownloadListener
 import android.webkit.URLUtil
-import androidx.appcompat.app.AlertDialog
+import com.afollestad.materialdialogs.MaterialDialog
 import com.blankj.utilcode.constant.PermissionConstants
 import com.blankj.utilcode.util.PermissionUtils
+import com.timecat.module.browser.prepareShowInService
 import javax.inject.Inject
 
 class LightningDownloadListener(context: Context) : DownloadListener {
@@ -48,28 +46,21 @@ class LightningDownloadListener(context: Context) : DownloadListener {
             .callback(object : PermissionUtils.SimpleCallback {
                 override fun onGranted() {
                     val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
-                    val downloadSize: String
-                    downloadSize = if (contentLength > 0) {
+                    val downloadSize: String = if (contentLength > 0) {
                         Formatter.formatFileSize(context, contentLength)
                     } else {
                         context.getString(R.string.unknown_size)
                     }
-                    val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
-                        when (which) {
-                            DialogInterface.BUTTON_POSITIVE -> downloadHandler!!.onDownloadStart(context, userPreferences!!, url, userAgent, contentDisposition, mimetype, downloadSize)
-                            DialogInterface.BUTTON_NEGATIVE -> {
-                            }
-                        }
-                    }
-                    val builder = AlertDialog.Builder(context) // dialog
                     val message = context.getString(R.string.dialog_download, downloadSize)
-                    val dialog: Dialog = builder.setTitle(fileName)
-                        .setMessage(message)
-                        .setPositiveButton(context.resources.getString(R.string.action_download),
-                            dialogClickListener)
-                        .setNegativeButton(context.resources.getString(R.string.action_cancel),
-                            dialogClickListener).show()
-                    setDialogSize(context, dialog)
+                    MaterialDialog(context).show {
+                        prepareShowInService()
+                        title(text = fileName)
+                        message(text = message)
+                        positiveButton(R.string.action_download) {
+                            downloadHandler!!.onDownloadStart(context, userPreferences!!, url, userAgent, contentDisposition, mimetype, downloadSize)
+                        }
+                        negativeButton(R.string.action_cancel)
+                    }
                     logger!!.log(TAG, "Downloading: $fileName")
                 }
 

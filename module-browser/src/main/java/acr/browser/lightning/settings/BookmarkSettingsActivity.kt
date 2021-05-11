@@ -17,6 +17,9 @@ import android.app.Application
 import android.os.Environment
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.list.listItems
+import com.afollestad.materialdialogs.list.listItemsSingleChoice
 import com.blankj.utilcode.constant.PermissionConstants
 import com.blankj.utilcode.util.PermissionUtils
 import com.timecat.layout.ui.business.form.Next
@@ -193,44 +196,41 @@ class BookmarkSettingsActivity : BaseSettingActivity() {
     }
 
     private fun showImportBookmarkDialog(path: File?) {
-        val builder = AlertDialog.Builder(this)
 
         val title = getString(R.string.title_chooser)
-        builder.setTitle(title + ": " + Environment.getExternalStorageDirectory())
-
         val fileList = loadFileList(path)
-        val fileNames = fileList.map(File::getName).toTypedArray()
-
-        builder.setItems(fileNames) { _, which ->
-            if (fileList[which].isDirectory) {
-                showImportBookmarkDialog(fileList[which])
-            } else {
-                importSubscription = BookmarkExporter
-                    .importBookmarksFromFile(fileList[which])
-                    .subscribeOn(databaseScheduler)
-                    .observeOn(mainScheduler)
-                    .subscribeBy(
-                        onSuccess = { importList ->
-                            bookmarkRepository.addBookmarkList(importList)
-                                .subscribeOn(databaseScheduler)
-                                .observeOn(mainScheduler)
-                                .subscribe {
-                                    snackbar("${importList.size} ${getString(R.string.message_import)}")
+        val fileNames = fileList.map(File::getName)
+        MaterialDialog(this).show {
+            title(text=title + ": " + Environment.getExternalStorageDirectory())
+            listItems(items=fileNames) { _, which, _ ->
+                if (fileList[which].isDirectory) {
+                    showImportBookmarkDialog(fileList[which])
+                } else {
+                    importSubscription = BookmarkExporter
+                        .importBookmarksFromFile(fileList[which])
+                        .subscribeOn(databaseScheduler)
+                        .observeOn(mainScheduler)
+                        .subscribeBy(
+                            onSuccess = { importList ->
+                                bookmarkRepository.addBookmarkList(importList)
+                                    .subscribeOn(databaseScheduler)
+                                    .observeOn(mainScheduler)
+                                    .subscribe {
+                                        snackbar("${importList.size} ${getString(R.string.message_import)}")
+                                    }
+                            },
+                            onError = { throwable ->
+                                logger.log(TAG, "onError: importing bookmarks", throwable)
+                                if (!isFinishing) {
+                                    Utils.createInformativeDialog(this@BookmarkSettingsActivity, R.string.title_error, R.string.import_bookmark_error)
+                                } else {
+                                    application.toast(R.string.import_bookmark_error)
                                 }
-                        },
-                        onError = { throwable ->
-                            logger.log(TAG, "onError: importing bookmarks", throwable)
-                            if (!isFinishing) {
-                                Utils.createInformativeDialog(this, R.string.title_error, R.string.import_bookmark_error)
-                            } else {
-                                application.toast(R.string.import_bookmark_error)
                             }
-                        }
-                    )
+                        )
+                }
             }
         }
-        val dialog = builder.show()
-        BrowserDialog.setDialogSize(this, dialog)
     }
 
 }

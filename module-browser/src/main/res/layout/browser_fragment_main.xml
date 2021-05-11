@@ -13,7 +13,7 @@
             android:layout_height="match_parent"
             android:fitsSystemWindows="true">
 
-            <view class="com.timecat.module.browser.fragment.AbsBrowserFragment$KeyEventView"
+            <com.timecat.module.browser.KeyEventView
                 android:id="@+id/ui_layout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -24,7 +24,7 @@
                 <include layout="@layout/browser_content"/>
 
                 <include layout="@layout/browser_search_interface"/>
-            </view>
+            </com.timecat.module.browser.KeyEventView>
 
             <FrameLayout
                 android:id="@+id/left_drawer"

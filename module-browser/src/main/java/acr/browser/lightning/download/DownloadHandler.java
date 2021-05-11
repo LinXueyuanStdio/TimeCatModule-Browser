@@ -3,7 +3,6 @@
  */
 package acr.browser.lightning.download;
 
-import android.app.Dialog;
 import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -16,6 +15,8 @@ import android.text.TextUtils;
 import android.webkit.CookieManager;
 import android.webkit.MimeTypeMap;
 import android.webkit.URLUtil;
+
+import com.timecat.module.browser.DialogExtKt;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +34,6 @@ import acr.browser.lightning.database.downloads.DownloadsRepository;
 import acr.browser.lightning.di.DatabaseScheduler;
 import acr.browser.lightning.di.MainScheduler;
 import acr.browser.lightning.di.NetworkScheduler;
-import acr.browser.lightning.dialog.BrowserDialog;
 import acr.browser.lightning.extensions.ActivityExtensions;
 import acr.browser.lightning.log.Logger;
 import acr.browser.lightning.preference.UserPreferences;
@@ -42,7 +42,6 @@ import acr.browser.lightning.utils.Utils;
 import acr.browser.lightning.view.LightningView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import io.reactivex.Scheduler;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
@@ -185,10 +184,7 @@ public class DownloadHandler {
                 title = R.string.download_no_sdcard_dlg_title;
             }
 
-            Dialog dialog = new AlertDialog.Builder(context).setTitle(title)
-                .setIcon(android.R.drawable.ic_dialog_alert).setMessage(msg)
-                .setPositiveButton(R.string.action_ok, null).show();
-            BrowserDialog.setDialogSize(context, dialog);
+            DialogExtKt.createInformativeDialog(context, title, msg, android.R.drawable.ic_dialog_alert);
             return;
         }
 

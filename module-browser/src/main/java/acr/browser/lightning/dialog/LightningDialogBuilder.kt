@@ -25,7 +25,8 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
-import androidx.appcompat.app.AlertDialog
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.customview.customView
 import io.reactivex.Scheduler
 import javax.inject.Inject
 
@@ -139,8 +140,6 @@ class LightningDialogBuilder @Inject constructor(
         uiController: UIController,
         entry: Bookmark.Entry
     ) {
-        val editBookmarkDialog = AlertDialog.Builder(context)
-        editBookmarkDialog.setTitle(R.string.title_edit_bookmark)
         val dialogLayout = View.inflate(context, R.layout.browser_dialog_edit_bookmark, null)
         val getTitle = dialogLayout.findViewById<EditText>(R.id.bookmark_title)
         getTitle.setText(entry.title)
@@ -158,21 +157,23 @@ class LightningDialogBuilder @Inject constructor(
                     android.R.layout.simple_dropdown_item_1line, folders)
                 getFolder.threshold = 1
                 getFolder.setAdapter(suggestionsAdapter)
-                editBookmarkDialog.setView(dialogLayout)
-                editBookmarkDialog.setPositiveButton(context.getString(R.string.action_ok)) { _, _ ->
-                    val editedItem = Bookmark.Entry(
-                        title = getTitle.text.toString(),
-                        url = getUrl.text.toString(),
-                        folder = getFolder.text.toString().asFolder(),
-                        position = entry.position
-                    )
-                    bookmarkManager.editBookmark(entry, editedItem)
-                        .subscribeOn(databaseScheduler)
-                        .observeOn(mainScheduler)
-                        .subscribe(uiController::handleBookmarksChange)
+
+                MaterialDialog(context).show {
+                    title(R.string.title_edit_bookmark)
+                    customView(view = dialogLayout)
+                    positiveButton(R.string.action_ok) {
+                        val editedItem = Bookmark.Entry(
+                            title = getTitle.text.toString(),
+                            url = getUrl.text.toString(),
+                            folder = getFolder.text.toString().asFolder(),
+                            position = entry.position
+                        )
+                        bookmarkManager.editBookmark(entry, editedItem)
+                            .subscribeOn(databaseScheduler)
+                            .observeOn(mainScheduler)
+                            .subscribe(uiController::handleBookmarksChange)
+                    }
                 }
-                val dialog = editBookmarkDialog.show()
-                BrowserDialog.setDialogSize(context, dialog)
             }
     }
 
