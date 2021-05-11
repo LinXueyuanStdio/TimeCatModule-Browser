@@ -148,11 +148,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".settings.activity.SettingsActivity"
+            android:name=".settings.SettingsActivity"
             android:colorMode="wideColorGamut"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
-            android:label="@string/settings"
-            android:theme="@style/Theme.SettingsTheme">
+            android:label="@string/settings">
             <intent-filter android:label="浏览器设置">
                 <action android:name="android.intent.action.SETTINGS" />
 
@@ -176,7 +175,6 @@
         <activity android:name=".settings.BookmarkSettingsActivity" />
         <activity android:name=".settings.PrivacySettingsActivity" />
         <activity android:name=".settings.GeneralSettingsActivity" />
-        <activity android:name=".settings.SettingsActivity" />
     </application>
 
 </manifest>
