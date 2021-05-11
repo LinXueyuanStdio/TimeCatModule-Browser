@@ -105,7 +105,7 @@ dependencies {
     api 'io.reactivex.rxjava2:rxkotlin:2.3.0'
 
     // tor proxy
-    final def netCipherVersion = '2.1.0'
+    final def netCipherVersion = '2.0.0-alpha1'
     api "info.guardianproject.netcipher:netcipher:$netCipherVersion"
     api "info.guardianproject.netcipher:netcipher-webkit:$netCipherVersion"
 

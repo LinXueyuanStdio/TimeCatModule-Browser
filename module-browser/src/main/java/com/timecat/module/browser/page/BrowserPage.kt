@@ -1,6 +1,7 @@
 package com.timecat.module.browser.page
 
 import acr.browser.lightning.R
+import android.content.Intent
 import android.os.Build
 import android.webkit.CookieManager
 import android.webkit.CookieSyncManager
@@ -13,7 +14,9 @@ import io.reactivex.Completable
  * @description null
  * @usage null
  */
-class BrowserPage : AbsBrowserPage() {
+class BrowserPage(
+    intent: Intent? = null
+) : AbsBrowserPage(intent) {
 
     @Suppress("DEPRECATION")
     public override fun updateCookiePreference(): Completable = Completable.fromAction {

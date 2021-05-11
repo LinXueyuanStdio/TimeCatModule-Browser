@@ -17,7 +17,6 @@ import acr.browser.lightning.reading.activity.ReadingActivity
 import acr.browser.lightning.search.SuggestionsAdapter
 import acr.browser.lightning.settings.*
 import acr.browser.lightning.settings.SettingsActivity
-import acr.browser.lightning.settings.fragment.*
 import acr.browser.lightning.utils.ProxyUtils
 import acr.browser.lightning.view.LightningChromeClient
 import acr.browser.lightning.view.LightningView

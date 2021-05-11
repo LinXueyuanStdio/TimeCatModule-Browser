@@ -59,7 +59,6 @@ import android.text.TextUtils
 import android.text.TextWatcher
 import android.text.style.CharacterStyle
 import android.text.style.ParagraphStyle
-import android.util.AttributeSet
 import android.util.Log
 import android.view.*
 import android.view.View.*
@@ -109,7 +108,9 @@ import javax.inject.Inject
  * @description null
  * @usage null
  */
-abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController, OnClickListener, Toolbar.OnMenuItemClickListener {
+abstract class AbsBrowserPage(
+    var intent: Intent?
+) : AbsThemeBrowserPage(), BrowserView, UIController, OnClickListener, androidx.appcompat.widget.Toolbar.OnMenuItemClickListener {
 
     //region field
     // Toolbar Views
@@ -498,9 +499,7 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
         drawer_layout.setDrawerShadow(R.drawable.drawer_right_shadow, GravityCompat.END)
         drawer_layout.setDrawerShadow(R.drawable.drawer_left_shadow, GravityCompat.START)
 
-        var intent: Intent? = null
-
-        val launchedFromHistory = intent != null && intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
+        val launchedFromHistory = intent != null && intent!!.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
 
         if (intent?.action == INTENT_PANIC_TRIGGER) {
             panicClean()

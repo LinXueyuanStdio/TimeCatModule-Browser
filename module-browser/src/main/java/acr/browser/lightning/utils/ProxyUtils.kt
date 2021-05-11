@@ -4,18 +4,13 @@ import acr.browser.lightning.BrowserApp
 import acr.browser.lightning.BrowserApp.Companion.appComponent
 import acr.browser.lightning.R
 import acr.browser.lightning.constant.*
-import acr.browser.lightning.dialog.BrowserDialog.setDialogSize
 import acr.browser.lightning.extensions.snackbar
 import acr.browser.lightning.preference.DeveloperPreferences
 import acr.browser.lightning.preference.UserPreferences
-import android.app.Activity
-import android.app.Dialog
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import androidx.appcompat.app.AlertDialog
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.list.listItemsSingleChoice
 import com.timecat.module.browser.prepareShowInService
@@ -64,7 +59,7 @@ class ProxyUtils @Inject constructor() {
                 val proxyChoices = context.resources.getStringArray(R.array.proxy_choices_array)
                 MaterialDialog(context).show {
                     title(R.string.http_proxy)
-                    listItemsSingleChoice(items=proxyChoices.asList(), initialSelection = mUserPreferences!!.proxyChoice) {_,which,_->
+                    listItemsSingleChoice(items = proxyChoices.asList(), initialSelection = mUserPreferences!!.proxyChoice) { _, which, _ ->
                         mUserPreferences!!.proxyChoice = which
                         if (which != NO_PROXY) {
                             initializeProxy(context)
@@ -75,7 +70,7 @@ class ProxyUtils @Inject constructor() {
             } else {
                 MaterialDialog(context).show {
                     message(if (orbotInstalled) R.string.use_tor_prompt else R.string.use_i2p_prompt)
-                    positiveButton(R.string.yes){
+                    positiveButton(R.string.yes) {
                         mUserPreferences!!.proxyChoice = if (orbotInstalled) PROXY_ORBOT else PROXY_I2P
                         initializeProxy(context)
                     }
@@ -136,18 +131,18 @@ class ProxyUtils @Inject constructor() {
         }
     }
 
-    fun isProxyReady():Boolean {
-            if (mUserPreferences!!.proxyChoice == PROXY_I2P) {
-                if (!mI2PHelper!!.isI2PAndroidRunning) {
-                    snackbar(R.string.i2p_not_running)
-                    return false
-                } else if (!mI2PHelper!!.areTunnelsActive()) {
-                    snackbar(R.string.i2p_tunnels_not_ready)
-                    return false
-                }
+    fun isProxyReady(): Boolean {
+        if (mUserPreferences!!.proxyChoice == PROXY_I2P) {
+            if (!mI2PHelper!!.isI2PAndroidRunning) {
+                snackbar(R.string.i2p_not_running)
+                return false
+            } else if (!mI2PHelper!!.areTunnelsActive()) {
+                snackbar(R.string.i2p_tunnels_not_ready)
+                return false
             }
-            return true
         }
+        return true
+    }
 
     fun updateProxySettings(context: Context) {
         if (mUserPreferences!!.proxyChoice != NO_PROXY) {
@@ -194,6 +189,7 @@ class ProxyUtils @Inject constructor() {
         // Helper
         private var sI2PHelperBound = false
         private var sI2PProxyInitialized = false
+
         @Proxy
         fun sanitizeProxyChoice(choice: Int, context: Context): Int {
             var choice = choice

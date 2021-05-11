@@ -110,7 +110,7 @@ import javax.inject.Inject
  * @description 浏览器作为 fragment 嵌入主应用中
  * @usage null
  */
-abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UIController, OnClickListener, Toolbar.OnMenuItemClickListener {
+abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UIController, OnClickListener, androidx.appcompat.widget.Toolbar.OnMenuItemClickListener {
     open fun theme(): Int = R.style.Theme_LightTheme
     abstract fun menu(): Int
 
