@@ -20,7 +20,7 @@ import io.reactivex.Completable
 class IncognitoPage(
     intent: Intent? = null
 ) : AbsBrowserPage(intent) {
-    override fun theme(): Int = R.style.Theme_DarkTheme
+    override fun theme(): Int = R.style.ThemeDark
     override fun menu(): Int = R.menu.incognito
 
     @Suppress("DEPRECATION")

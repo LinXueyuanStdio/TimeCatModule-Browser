@@ -13,6 +13,7 @@ import android.net.Uri
 import android.util.Log
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.list.listItemsSingleChoice
+import com.timecat.extend.arms.BaseApplication
 import com.timecat.module.browser.prepareShowInService
 import info.guardianproject.netcipher.proxy.OrbotHelper
 import info.guardianproject.netcipher.webkit.WebkitProxy
@@ -149,7 +150,7 @@ class ProxyUtils @Inject constructor() {
             initializeProxy(context)
         } else {
             try {
-                WebkitProxy.resetProxy(BrowserApp::class.java.name, context.applicationContext)
+                WebkitProxy.resetProxy(BaseApplication::class.java.name, context.applicationContext)
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to reset proxy", e)
             }

@@ -1,6 +1,5 @@
 package acr.browser.lightning.browser.activity
 
-import acr.browser.lightning.R
 import acr.browser.lightning.di.injector
 import acr.browser.lightning.preference.UserPreferences
 import acr.browser.lightning.utils.ThemeUtils
@@ -9,32 +8,25 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import com.timecat.page.base.base.theme.BaseThemeActivity
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
 
-abstract class ThemableBrowserActivity : AppCompatActivity() {
+abstract class ThemableBrowserActivity : BaseThemeActivity() {
 
     // TODO reduce protected visibility
-    @Inject protected lateinit var userPreferences: UserPreferences
+    @Inject
+    protected lateinit var userPreferences: UserPreferences
 
     private var themeId: Int = 0
     private var showTabsInDrawer: Boolean = false
     private var shouldRunOnResumeActions = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(R.style.Theme_LightTheme)
         injector.inject(this)
         themeId = userPreferences.useTheme
         showTabsInDrawer = userPreferences.showTabsInDrawer
-
-        // set the theme
-        if (themeId == 1) {
-            setTheme(R.style.Theme_DarkTheme)
-        } else if (themeId == 2) {
-            setTheme(R.style.Theme_BlackTheme)
-        }
         super.onCreate(savedInstanceState)
 
         resetPreferences()
@@ -94,12 +86,14 @@ abstract class ThemableBrowserActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        if (EventBus.getDefault().isRegistered(this)){
+        if (EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().unregister(this)
         }
     }
 
     class DefaultEvent
+
     @Subscribe
-    open fun onEvent(e:DefaultEvent){}
+    open fun onEvent(e: DefaultEvent) {
+    }
 }

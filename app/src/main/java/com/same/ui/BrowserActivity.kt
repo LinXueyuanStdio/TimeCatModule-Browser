@@ -14,11 +14,6 @@ import com.timecat.page.base.friend.compact.BaseFragmentActivity
  * @usage null
  */
 class BrowserActivity : BaseFragmentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(R.style.Theme_LightTheme)
-        super.onCreate(savedInstanceState)
-
-    }
     override fun createFragment(): Fragment {
         return BrowserFragment()
     }

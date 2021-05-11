@@ -21,7 +21,7 @@ import io.reactivex.Completable
  */
 @FragmentAnno(RouterHub.MASTER_IncognitoFragment)
 class IncognitoFragment : AbsBrowserFragment() {
-    override fun theme(): Int = R.style.Theme_DarkTheme
+    override fun theme(): Int = R.style.ThemeDark
     override fun menu(): Int = R.menu.incognito
 
     @Suppress("DEPRECATION")

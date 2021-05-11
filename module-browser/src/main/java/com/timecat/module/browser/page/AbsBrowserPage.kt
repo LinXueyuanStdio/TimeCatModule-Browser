@@ -239,7 +239,7 @@ abstract class AbsBrowserPage(
         injector.inject(this)
     }
 
-    open fun theme(): Int = R.style.Theme_LightTheme
+    open fun theme(): Int = R.style.ThemeLight
 
     abstract fun menu(): Int
 

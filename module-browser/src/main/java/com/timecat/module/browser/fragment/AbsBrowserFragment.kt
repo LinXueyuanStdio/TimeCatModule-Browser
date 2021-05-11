@@ -111,7 +111,7 @@ import javax.inject.Inject
  * @usage null
  */
 abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UIController, OnClickListener, androidx.appcompat.widget.Toolbar.OnMenuItemClickListener {
-    open fun theme(): Int = R.style.Theme_LightTheme
+    open fun theme(): Int = R.style.ThemeLight
     abstract fun menu(): Int
 
     override fun lazyInit() {

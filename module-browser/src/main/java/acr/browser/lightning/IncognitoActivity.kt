@@ -14,7 +14,7 @@ import org.greenrobot.eventbus.Subscribe
 
 class IncognitoActivity : BrowserActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(R.style.Theme_DarkTheme)
+        setTheme(R.style.ThemeDark)
         super.onCreate(savedInstanceState)
     }
 

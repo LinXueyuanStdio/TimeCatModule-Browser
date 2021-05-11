@@ -3,23 +3,18 @@
 
     <!-- Settings themes -->
     <style name="Theme.SettingsTheme" parent="Theme.LightTheme">
-        <item name="toolbarSettingsBackground">@color/primary_color</item>
     </style>
 
     <style name="Theme.SettingsTheme.Dark" parent="Theme.DarkTheme">
-        <item name="toolbarSettingsBackground">@color/primary_color_dark</item>
-
         <!-- Dark settings has a special primary dark color-->
         <item name="colorPrimaryDark">@color/secondary_color_settings_dark</item>
     </style>
 
     <style name="Theme.SettingsTheme.Black" parent="Theme.BlackTheme">
-        <item name="toolbarSettingsBackground">@color/black</item>
     </style>
 
     <!-- Regular themes -->
     <style name="Theme.LightTheme" parent="Theme.BaseLightTheme">
-        <item name="searchBackground">@drawable/card_bg</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@color/secondary_color</item>
         <item name="android:windowTranslucentStatus">false</item>
@@ -32,14 +27,12 @@
     </style>
 
     <style name="Theme.DarkTheme" parent="Theme.BaseDarkTheme">
-        <item name="searchBackground">@drawable/card_bg</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@color/secondary_color</item>
         <item name="android:windowTranslucentStatus">false</item>
     </style>
 
     <style name="Theme.BlackTheme" parent="Theme.BaseBlackTheme">
-        <item name="searchBackground">@drawable/card_bg</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@color/black</item>
         <item name="android:windowTranslucentStatus">false</item>

@@ -7,6 +7,7 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.TransitionDrawable
 import androidx.core.content.ContextCompat
+import com.timecat.component.identity.Attr
 
 /**
  * Create a new transition drawable with the specified list of layers. At least
@@ -17,7 +18,7 @@ class BackgroundDrawable(
 ) : TransitionDrawable(
     arrayOf<Drawable>(
         ColorDrawable(ContextCompat.getColor(context, R.color.transparent)),
-        ColorDrawable(ThemeUtils.getColor(context, R.attr.selectedBackground))
+        ColorDrawable(Attr.getBackgroundDarkColor(context))
     )
 ) {
 

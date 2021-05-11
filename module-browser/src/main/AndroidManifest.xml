@@ -37,7 +37,9 @@
         <meta-data
             android:name="android.max_aspect"
             android:value="2.1" />
-
+        <meta-data
+            android:name="com.timecat.module.browser.GlobalConfiguration"
+            android:value="ConfigModule"/>
         <activity
             android:name=".MainActivity"
             android:alwaysRetainTaskState="true"
