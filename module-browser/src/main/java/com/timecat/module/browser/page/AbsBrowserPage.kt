@@ -1,6 +1,5 @@
 package com.timecat.module.browser.page
 
-import acr.browser.lightning.IncognitoActivity
 import acr.browser.lightning.R
 import acr.browser.lightning.browser.*
 import acr.browser.lightning.browser.fragment.BookmarksFrameLayout
@@ -81,17 +80,25 @@ import androidx.appcompat.widget.*
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
+import androidx.core.view.updateLayoutParams
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.palette.graphics.Palette
 import com.afollestad.materialdialogs.MaterialDialog
 import com.anthonycr.progress.AnimatedProgressBar
 import com.google.android.material.snackbar.Snackbar
+import com.same.lib.core.ActionBar
+import com.same.lib.core.ActionBarMenuItem
+import com.same.lib.drawable.MenuDrawable
+import com.timecat.component.commonsdk.extension.toInt
+import com.timecat.component.commonsdk.utils.override.LogUtil
+import com.timecat.component.identity.Attr
 import com.timecat.component.setting.DEF
 import com.timecat.data.bmob.dao.UserDao
 import com.timecat.data.room.RoomClient
 import com.timecat.data.room.record.RoomRecord
 import com.timecat.element.alert.ToastUtil
 import com.timecat.identity.data.block.BLOCK_APP_WebApp
+import com.timecat.layout.ui.utils.ScreenUtil
 import com.timecat.module.browser.KeyEventView
 import com.timecat.module.browser.prepareShowInService
 import io.reactivex.Completable
@@ -235,10 +242,6 @@ abstract class AbsBrowserPage(
     }
     //endregion
 
-    init {
-        injector.inject(this)
-    }
-
     open fun theme(): Int = R.style.ThemeLight
 
     abstract fun menu(): Int
@@ -266,7 +269,46 @@ abstract class AbsBrowserPage(
      */
     protected abstract fun updateCookiePreference(): Completable
 
-    //region view
+    override fun createActionBar(context: Context): ActionBar {
+        val actionBar = buildActionBar(context)
+        actionBar.setTitle("hhh")
+        val menuDrawable = MenuDrawable()
+        menuDrawable.setRotateToBack(true)
+        actionBar.setBackButtonDrawable(menuDrawable)
+
+        val iconColor = Attr.getIconColor(context)
+        val menu = actionBar.createMenu()
+        menu.addItem(100, R.drawable.ic_search).apply {
+            setIconColor(iconColor)
+            setIsSearchField(true)
+            setActionBarMenuItemSearchListener(object : ActionBarMenuItem.ActionBarMenuItemSearchListener() {
+                override fun onSearchExpand() {
+                }
+
+                override fun onSearchCollapse() {
+                }
+
+                override fun onTextChanged(editText: EditText) {
+                }
+            })
+        }
+        menu.addItem(1, R.drawable.ic_close).apply {
+            setIconColor(iconColor)
+        }
+        actionBar.setActionBarMenuOnItemClick(object : ActionBar.ActionBarMenuOnItemClick() {
+            override fun onItemClick(id: Int) {
+                when (id) {
+                    -1 -> {
+                    }
+                    1 -> {
+                        LogUtil.se("MENU_STATUS")
+                        finishFragment(false)
+                    }
+                }
+            }
+        })
+        return actionBar
+    }
     lateinit var v: View
 
     private lateinit var coordinator_layout: CoordinatorLayout
@@ -357,7 +399,7 @@ abstract class AbsBrowserPage(
 
         //TODO make sure dark theme flag gets set correctly
         isDarkTheme = userPreferences.useTheme != 0 || isIncognito()
-        iconColor = ThemeUtils.getIconThemeColor(context(), isDarkTheme)
+        iconColor = ThemeUtils.getIconThemeColor(context, isDarkTheme)
         disabledIconColor = if (isDarkTheme) {
             ContextCompat.getColor(context, R.color.icon_dark_theme_disabled)
         } else {
@@ -395,7 +437,7 @@ abstract class AbsBrowserPage(
         setNavigationDrawerWidth(context)
         drawer_layout.addDrawerListener(DrawerLocker())
 
-        webPageBitmap = ThemeUtils.getThemedBitmap(context(), R.drawable.ic_webpage, isDarkTheme)
+        webPageBitmap = ThemeUtils.getThemedBitmap(context, R.drawable.ic_webpage, isDarkTheme)
 
         val bookmarksFrameLayout = BookmarksFrameLayout.createBookmarksView(context, isIncognito(), this)
         val tabsFrameLayout = TabsFrameLayout.createTabsView(context, isIncognito(), shouldShowTabsInDrawer, this)
@@ -416,7 +458,7 @@ abstract class AbsBrowserPage(
         }
 
         // set display options of the ActionBar
-        val inflater = LayoutInflater.from(context())
+        val inflater = LayoutInflater.from(context)
         val customView = inflater.inflate(R.layout.browser_toolbar_content, actionBar, false)
         actionBar.addView(customView)
 
@@ -501,6 +543,7 @@ abstract class AbsBrowserPage(
 
         val launchedFromHistory = intent != null && intent!!.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
 
+        proxyUtils.onStart(context)
         if (intent?.action == INTENT_PANIC_TRIGGER) {
             panicClean()
         } else {
@@ -1208,14 +1251,17 @@ abstract class AbsBrowserPage(
         val currentTab = tabsManager.currentTab
         if (drawer_layout.isDrawerOpen(getTabDrawer())) {
             drawer_layout.closeDrawer(getTabDrawer())
+            return true
         } else if (drawer_layout.isDrawerOpen(getBookmarkDrawer())) {
             bookmarksView?.navigateBack()
+            return true
         } else {
             if (currentTab != null) {
                 logger.log(TAG, "currentTab != null")
                 if (searchView?.hasFocus() == true) {
                     logger.log(TAG, "searchView?.hasFocus() == true")
                     currentTab.requestFocus()
+                    return true
                 } else if (currentTab.canGoBack()) {
                     logger.log(TAG, "currentTab.canGoBack()")
                     if (!currentTab.isShown) {
@@ -1223,6 +1269,7 @@ abstract class AbsBrowserPage(
                     } else {
                         currentTab.goBack()
                     }
+                    return true
                 } else {
                     logger.log(TAG, "else")
                     if (customView != null || customViewCallback != null) {
@@ -1230,13 +1277,13 @@ abstract class AbsBrowserPage(
                     } else {
                         presenter?.deleteTab(tabsManager.positionOf(currentTab))
                     }
+                    return true
                 }
             } else {
                 logger.log(TAG, "This shouldn't happen ever")
-                return super.onBackPressed()
+                return false
             }
         }
-        return true
     }
 
     override fun onPause() {
@@ -1252,7 +1299,6 @@ abstract class AbsBrowserPage(
     }
 
     override fun onFragmentCreate(): Boolean {
-        proxyUtils.onStart(context())
         return super.onFragmentCreate()
     }
 
@@ -1796,15 +1842,13 @@ abstract class AbsBrowserPage(
      */
     override fun hideActionBar() {
         if (isFullScreen) {
-            if (toolbar_layout == null || content_frame == null)
-                return
-
             val height = toolbar_layout.height
             if (toolbar_layout.translationY > -0.01f) {
                 val hideAnimation = object : Animation() {
                     override fun applyTransformation(interpolatedTime: Float, t: Transformation) {
                         val trans = interpolatedTime * height
                         toolbar_layout.translationY = -trans
+                        actionBar.translationY =  -trans
                         setWebViewTranslation(height - trans)
                     }
                 }
@@ -1823,9 +1867,6 @@ abstract class AbsBrowserPage(
     override fun showActionBar() {
         if (isFullScreen) {
             logger.log(TAG, "showActionBar")
-            if (toolbar_layout == null)
-                return
-
             var height = toolbar_layout.height
             if (height == 0) {
                 toolbar_layout.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
@@ -1838,6 +1879,7 @@ abstract class AbsBrowserPage(
                     override fun applyTransformation(interpolatedTime: Float, t: Transformation) {
                         val trans = interpolatedTime * totalHeight
                         toolbar_layout.translationY = trans - totalHeight
+                        actionBar.translationY = trans - totalHeight
                         setWebViewTranslation(trans)
                     }
                 }
@@ -1880,8 +1922,10 @@ abstract class AbsBrowserPage(
             LightningDialogBuilder.NewTab.BACKGROUND -> presenter?.newTab(urlInitializer, false)
             LightningDialogBuilder.NewTab.INCOGNITO -> {
                 drawer_layout.closeDrawers()
-                val intent = IncognitoActivity.createIntent(context(), Uri.parse(url))
-                context().startActivity(intent)
+                presentFragment(IncognitoPage(Intent().apply {
+                    flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    data = Uri.parse(url)
+                }))
             }
         }
     }
@@ -2007,7 +2051,7 @@ abstract class AbsBrowserPage(
                 return true
             }
             R.id.action_incognito -> {
-                context().startActivity(IncognitoActivity.createIntent(context()))
+                presentFragment(IncognitoPage())
                 return true
             }
             R.id.action_share -> {
@@ -2084,5 +2128,12 @@ abstract class AbsBrowserPage(
             }
             else -> return false
         }
+    }
+
+    init {
+        injector.inject(this)
+        LogUtil.se("inject")
+        LogUtil.se("${proxyUtils == null}")
+
     }
 }

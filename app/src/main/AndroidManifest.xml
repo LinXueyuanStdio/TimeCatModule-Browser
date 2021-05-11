@@ -41,6 +41,7 @@
             </intent-filter>
         </activity>
         <activity android:name="com.same.ui.BrowserActivity" />
+        <activity android:name="com.same.ui.PagerActivity" />
     </application>
 
 </manifest>

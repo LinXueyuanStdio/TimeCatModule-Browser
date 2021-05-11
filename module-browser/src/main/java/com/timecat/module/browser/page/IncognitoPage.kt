@@ -39,7 +39,10 @@ class IncognitoPage(
 
     override fun isIncognito() = true
 
-    override fun closeActivity() = closeDrawers(this::closeBrowser)
+    override fun closeActivity() {
+        closeDrawers(this::closeBrowser)
+        finishFragment()
+    }
 
     companion object {
         /**

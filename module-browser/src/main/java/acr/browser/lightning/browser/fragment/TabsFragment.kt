@@ -58,17 +58,7 @@ class TabsFragment : Fragment(), View.OnClickListener, View.OnLongClickListener,
 
     @Inject
     internal lateinit var userPreferences: UserPreferences
-    private lateinit var tab_header_button: FrameLayout
-    private lateinit var plusIcon: ImageView
     private lateinit var tabs_list: RecyclerView
-    private lateinit var action_back: FrameLayout
-    private lateinit var icon_back: ImageView
-    private lateinit var action_home: FrameLayout
-    private lateinit var icon_home: ImageView
-    private lateinit var action_forward: FrameLayout
-    private lateinit var icon_forward: ImageView
-    private lateinit var new_tab_button: FrameLayout
-    private lateinit var icon_plus: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,17 +91,7 @@ class TabsFragment : Fragment(), View.OnClickListener, View.OnLongClickListener,
                 setOnLongClickListener(this@TabsFragment)
             }
         }
-        tab_header_button = view.findViewById(R.id.tab_header_button)
-        plusIcon = view.findViewById(R.id.plusIcon)
         tabs_list = view.findViewById(R.id.tabs_list)
-        action_back = view.findViewById(R.id.action_back)
-        icon_back = view.findViewById(R.id.icon_back)
-        action_home = view.findViewById(R.id.action_home)
-        icon_home = view.findViewById(R.id.icon_home)
-        action_forward = view.findViewById(R.id.action_forward)
-        icon_forward = view.findViewById(R.id.icon_forward)
-        new_tab_button = view.findViewById(R.id.new_tab_button)
-        icon_plus = view.findViewById(R.id.icon_plus)
         return view
     }
 

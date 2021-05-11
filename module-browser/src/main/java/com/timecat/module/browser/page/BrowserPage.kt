@@ -40,5 +40,6 @@ class BrowserPage(
 
     override fun closeActivity() = closeDrawers {
         performExitCleanUp()
+        finishFragment()
     }
 }

@@ -23,6 +23,7 @@ import acr.browser.lightning.view.LightningView
 import acr.browser.lightning.view.LightningWebClient
 import com.timecat.module.browser.fragment.AbsBrowserFragment
 import com.timecat.module.browser.fragment.AbsThemeBrowserFragment
+import com.timecat.module.browser.page.AbsBrowserPage
 import com.timecat.module.browser.page.AbsThemeBrowserPage
 import dagger.Component
 import javax.inject.Singleton
@@ -41,9 +42,9 @@ interface AppComponent {
     fun inject(fragment: PrivacySettingsActivity)
 
     fun inject(page: AbsThemeBrowserPage)
+    fun inject(page: AbsBrowserPage)
 
     fun inject(fragment: AbsThemeBrowserFragment)
-
     fun inject(fragment: AbsBrowserFragment)
 
     fun inject(activity: BrowserActivity)

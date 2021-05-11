@@ -67,4 +67,6 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'androidx.appcompat:appcompat:1.2.0'
     api project(':module-browser')
+    api rootProject.ext.timecat["MView-font"]
+    api rootProject.ext.timecat["MLang"]
 }

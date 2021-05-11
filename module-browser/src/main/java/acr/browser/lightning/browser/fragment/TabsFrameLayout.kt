@@ -50,7 +50,7 @@ class TabsFrameLayout @JvmOverloads constructor(
     context: Context,
     var uiController: UIController,
     private var isIncognito: Boolean = false,
-    private var showInNavigationDrawer: Boolean = false,
+    private var showInNavigationDrawer: Boolean = true,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr), View.OnClickListener, View.OnLongClickListener, TabsView {
@@ -63,17 +63,7 @@ class TabsFrameLayout @JvmOverloads constructor(
 
     @Inject
     internal lateinit var userPreferences: UserPreferences
-    private var tab_header_button: FrameLayout
-    private var plusIcon: ImageView
     private var tabs_list: RecyclerView
-    private var action_back: FrameLayout
-    private var icon_back: ImageView
-    private var action_home: FrameLayout
-    private var icon_home: ImageView
-    private var action_forward: FrameLayout
-    private var icon_forward: ImageView
-    private var new_tab_button: FrameLayout
-    private var icon_plus: ImageView
 
     init {
         injector.inject(this)
@@ -98,17 +88,7 @@ class TabsFrameLayout @JvmOverloads constructor(
                 setOnLongClickListener(this@TabsFrameLayout)
             }
         }
-        tab_header_button = findViewById(R.id.tab_header_button)
-        plusIcon = findViewById(R.id.plusIcon)
         tabs_list = findViewById(R.id.tabs_list)
-        action_back = findViewById(R.id.action_back)
-        icon_back = findViewById(R.id.icon_back)
-        action_home = findViewById(R.id.action_home)
-        icon_home = findViewById(R.id.icon_home)
-        action_forward = findViewById(R.id.action_forward)
-        icon_forward = findViewById(R.id.icon_forward)
-        new_tab_button = findViewById(R.id.new_tab_button)
-        icon_plus = findViewById(R.id.icon_plus)
         onViewCreated()
     }
 
