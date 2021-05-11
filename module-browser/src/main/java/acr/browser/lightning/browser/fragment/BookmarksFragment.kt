@@ -199,7 +199,7 @@ class BookmarksFragment : Fragment(), View.OnClickListener, View.OnLongClickList
 
     private fun getTabsManager(): TabsManager = uiController.getTabModel()
 
-    fun reinitializePreferences() {
+    override fun reinitializePreferences() {
         val activity = activity ?: return
         val darkTheme = userPreferences.useTheme != 0 || isIncognito
         webPageBitmap = ThemeUtils.getThemedBitmap(activity, R.drawable.ic_webpage, darkTheme)

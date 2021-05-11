@@ -24,6 +24,7 @@ import android.webkit.*
 import com.afollestad.materialdialogs.MaterialDialog
 import com.blankj.utilcode.constant.PermissionConstants
 import com.blankj.utilcode.util.PermissionUtils
+import com.timecat.module.browser.prepareShowInService
 import io.reactivex.Scheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -149,6 +150,7 @@ class LightningChromeClient(
                 override fun onGranted() {
                     val remember = true
                     MaterialDialog(context).show {
+                        prepareShowInService()
                         title(R.string.location)
                         val org = if (origin.length > 50) {
                             "${origin.subSequence(0, 50)}..."
@@ -156,7 +158,7 @@ class LightningChromeClient(
                             origin
                         }
                         message(text = org + context.getString(R.string.message_location))
-                        setCancelable(true)
+                        cancelable(true)
                         positiveButton(R.string.action_allow) {
                             callback.invoke(origin, true, remember)
                         }

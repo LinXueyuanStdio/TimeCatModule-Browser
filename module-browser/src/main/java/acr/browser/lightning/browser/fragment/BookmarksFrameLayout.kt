@@ -13,6 +13,7 @@ import acr.browser.lightning.database.bookmark.BookmarkRepository
 import acr.browser.lightning.di.DatabaseScheduler
 import acr.browser.lightning.di.MainScheduler
 import acr.browser.lightning.di.NetworkScheduler
+import acr.browser.lightning.di.injector
 import acr.browser.lightning.dialog.BrowserDialog
 import acr.browser.lightning.dialog.DialogItem
 import acr.browser.lightning.dialog.LightningDialogBuilder
@@ -20,15 +21,12 @@ import acr.browser.lightning.extensions.color
 import acr.browser.lightning.extensions.drawable
 import acr.browser.lightning.favicon.FaviconModel
 import acr.browser.lightning.preference.UserPreferences
-import acr.browser.lightning.reading.activity.ReadingActivity
 import acr.browser.lightning.utils.ThemeUtils
 import acr.browser.lightning.utils.UrlUtils
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.PorterDuff
-import android.os.Bundle
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -41,6 +39,7 @@ import androidx.annotation.IdRes
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.timecat.component.router.app.NAV
 import io.reactivex.Scheduler
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
@@ -120,7 +119,7 @@ class BookmarksFrameLayout @JvmOverloads constructor(
     private lateinit var action_reading: FrameLayout
     private lateinit var action_reading_image: ImageView
 
-init{
+    init {
         injector.inject(this)
 
         val context = requireNotNull(context) { "Context should never be null in onCreate" }
@@ -141,7 +140,7 @@ init{
             action_reading = findViewById(R.id.action_reading)
             action_reading_image = findViewById(R.id.action_reading_image)
         }
-    onViewCreated()
+        onViewCreated()
     }
 
     fun onResume() {
@@ -193,7 +192,7 @@ init{
 
     private fun getTabsManager(): TabsManager = uiController.getTabModel()
 
-    fun reinitializePreferences() {
+    override fun reinitializePreferences() {
         val darkTheme = userPreferences.useTheme != 0 || isIncognito
         webPageBitmap = ThemeUtils.getThemedBitmap(context, R.drawable.ic_webpage, darkTheme)
         folderBitmap = ThemeUtils.getThemedBitmap(context, R.drawable.ic_folder_special_24dp, darkTheme)
@@ -293,9 +292,7 @@ init{
             R.id.action_reading -> {
                 val currentTab = getTabsManager().currentTab
                 if (currentTab != null) {
-                    val read = Intent(activity, ReadingActivity::class.java)
-                    read.putExtra(LOAD_READING_URL, currentTab.url)
-                    startActivity(read)
+                    NAV.go("browser/ReadingActivity", LOAD_READING_URL, currentTab.url)
                 }
             }
             R.id.action_page_tools -> {
@@ -485,17 +482,11 @@ init{
     }
 
     companion object {
-
         @JvmStatic
-        fun createFragment(isIncognito: Boolean, controller: UIController) = BookmarksFragment().apply {
-            uiController = controller
-            arguments = Bundle().apply {
-                putBoolean(BookmarksFragment.INCOGNITO_MODE, isIncognito)
-            }
-        }
-
-        private const val TAG = "BookmarksFragment"
-
-        private const val INCOGNITO_MODE = "$TAG.INCOGNITO_MODE"
+        fun createBookmarksView(
+            context: Context,
+            isIncognito: Boolean,
+            controller: UIController
+        ) = BookmarksFrameLayout(context, controller, isIncognito)
     }
 }

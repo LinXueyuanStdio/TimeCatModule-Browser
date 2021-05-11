@@ -6,7 +6,9 @@ import acr.browser.lightning.browser.SearchBoxModel
 import acr.browser.lightning.browser.activity.BrowserActivity
 import acr.browser.lightning.browser.activity.ThemableBrowserActivity
 import acr.browser.lightning.browser.fragment.BookmarksFragment
+import acr.browser.lightning.browser.fragment.BookmarksFrameLayout
 import acr.browser.lightning.browser.fragment.TabsFragment
+import acr.browser.lightning.browser.fragment.TabsFrameLayout
 import com.timecat.module.browser.AppLifecyclesImpl
 import acr.browser.lightning.dialog.LightningDialogBuilder
 import acr.browser.lightning.download.DownloadHandler
@@ -29,6 +31,9 @@ import javax.inject.Singleton
 @Singleton
 @Component(modules = [(AppModule::class), (AppBindsModule::class)])
 interface AppComponent {
+
+    fun inject(view: BookmarksFrameLayout)
+    fun inject(view: TabsFrameLayout)
 
     fun inject(fragment: AdvancedSettingsActivity)
     fun inject(fragment: BookmarkSettingsActivity)

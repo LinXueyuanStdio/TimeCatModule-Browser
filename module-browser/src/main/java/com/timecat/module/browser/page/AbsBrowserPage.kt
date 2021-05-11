@@ -3,8 +3,8 @@ package com.timecat.module.browser.page
 import acr.browser.lightning.IncognitoActivity
 import acr.browser.lightning.R
 import acr.browser.lightning.browser.*
-import acr.browser.lightning.browser.fragment.BookmarksFragment
-import acr.browser.lightning.browser.fragment.TabsFragment
+import acr.browser.lightning.browser.fragment.BookmarksFrameLayout
+import acr.browser.lightning.browser.fragment.TabsFrameLayout
 import acr.browser.lightning.constant.LOAD_READING_URL
 import acr.browser.lightning.controller.UIController
 import acr.browser.lightning.database.Bookmark
@@ -77,15 +77,12 @@ import android.widget.TextView.OnEditorActionListener
 import androidx.annotation.ColorInt
 import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.*
-import androidx.appcompat.widget.Toolbar
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.fragment.app.Fragment
 import androidx.palette.graphics.Palette
 import com.afollestad.materialdialogs.MaterialDialog
 import com.anthonycr.progress.AnimatedProgressBar
@@ -96,6 +93,8 @@ import com.timecat.data.room.RoomClient
 import com.timecat.data.room.record.RoomRecord
 import com.timecat.element.alert.ToastUtil
 import com.timecat.identity.data.block.BLOCK_APP_WebApp
+import com.timecat.module.browser.KeyEventView
+import com.timecat.module.browser.prepareShowInService
 import io.reactivex.Completable
 import io.reactivex.Scheduler
 import io.reactivex.rxkotlin.subscribeBy
@@ -271,7 +270,7 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
 
     private lateinit var coordinator_layout: CoordinatorLayout
     private lateinit var drawer_layout: DrawerLayout
-    private lateinit var ui_layout: LinearLayout
+    private lateinit var ui_layout: KeyEventView
     private lateinit var toolbar_layout: LinearLayout
     private lateinit var tabs_toolbar_container: FrameLayout
     private lateinit var toolbar: androidx.appcompat.widget.Toolbar
@@ -290,6 +289,7 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
         val contextThemeWrapper: Context = ContextThemeWrapper(origin, theme())
         val themeAwareInflater = LayoutInflater.from(origin).cloneInContext(contextThemeWrapper)
         v = themeAwareInflater.inflate(layout(), null, false)
+        fragmentView = v
         bindView(v)
         lazyInit(context)
         return v
@@ -325,7 +325,7 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
     }
 
     @LayoutRes
-    protected fun layout(): Int = R.layout.browser_activity_main
+    protected fun layout(): Int = R.layout.browser_page_main
 
     protected open fun bindView(view: View) {
         coordinator_layout = view.findViewById(R.id.coordinator_layout)
@@ -347,7 +347,7 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
 
     private fun initialize(context: Context) {
         registerKeyEvent()
-        initializeToolbarHeight(context().resources.configuration)
+        initializeToolbarHeight(context.resources.configuration)
         toolbar.inflateMenu(menu())
         onCreateOptionsMenu(toolbar.menu)
         toolbar.setOnMenuItemClickListener(this)
@@ -358,15 +358,15 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
         isDarkTheme = userPreferences.useTheme != 0 || isIncognito()
         iconColor = ThemeUtils.getIconThemeColor(context(), isDarkTheme)
         disabledIconColor = if (isDarkTheme) {
-            ContextCompat.getColor(context(), R.color.icon_dark_theme_disabled)
+            ContextCompat.getColor(context, R.color.icon_dark_theme_disabled)
         } else {
-            ContextCompat.getColor(context(), R.color.icon_light_theme_disabled)
+            ContextCompat.getColor(context, R.color.icon_light_theme_disabled)
         }
         shouldShowTabsInDrawer = userPreferences.showTabsInDrawer
         swapBookmarksAndTabs = userPreferences.bookmarksAndTabsSwapped
 
         // initialize background ColorDrawable
-        val primaryColor = ThemeUtils.getPrimaryColor(context())
+        val primaryColor = ThemeUtils.getPrimaryColor(context)
         backgroundDrawable.color = primaryColor
 
         // Drawer stutters otherwise
@@ -396,30 +396,20 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
 
         webPageBitmap = ThemeUtils.getThemedBitmap(context(), R.drawable.ic_webpage, isDarkTheme)
 
-        val tabsFragment: TabsFragment? = fragmentManager.findFragmentByTag(TAG_TABS_FRAGMENT) as? TabsFragment
-        val bookmarksFragment: BookmarksFragment? =
-            fragmentManager.findFragmentByTag(TAG_BOOKMARK_FRAGMENT) as? BookmarksFragment
+        val bookmarksFrameLayout = BookmarksFrameLayout.createBookmarksView(context, isIncognito(), this)
+        val tabsFrameLayout = TabsFrameLayout.createTabsView(context, isIncognito(), shouldShowTabsInDrawer, this)
 
-        if (tabsFragment != null) {
-            fragmentManager.beginTransaction().remove(tabsFragment).commit()
-        }
+        tabsView = tabsFrameLayout
+        bookmarksView = bookmarksFrameLayout
 
-        tabsView = tabsFragment
-            ?: TabsFragment.createTabsFragment(isIncognito(), shouldShowTabsInDrawer, this)
+        val tabDrawer = getTabDrawer()
+        tabDrawer.removeAllViews()
+        tabDrawer.addView(tabsFrameLayout)
 
-        if (bookmarksFragment != null) {
-            fragmentManager.beginTransaction().remove(bookmarksFragment).commit()
-        }
+        val bookmarkDrawer = getBookmarkDrawer()
+        bookmarkDrawer.removeAllViews()
+        bookmarkDrawer.addView(bookmarksFrameLayout)
 
-        bookmarksView = bookmarksFragment ?: BookmarksFragment.createFragment(isIncognito(), this)
-
-        fragmentManager.executePendingTransactions()
-
-        fragmentManager
-            .beginTransaction()
-            .replace(getTabsFragmentViewId(), tabsView as Fragment, TAG_TABS_FRAGMENT)
-            .replace(getBookmarksFragmentViewId(), bookmarksView as Fragment, TAG_BOOKMARK_FRAGMENT)
-            .commit()
         if (shouldShowTabsInDrawer) {
             toolbar_layout.removeView(tabs_toolbar_container)
         }
@@ -463,14 +453,14 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
         customView.findViewById<FrameLayout>(R.id.arrow_button).setOnClickListener(this)
 
         val iconBounds = Utils.dpToPx(24f)
-        backgroundColor = ThemeUtils.getPrimaryColor(context())
-        deleteIconDrawable = ThemeUtils.getThemedDrawable(context(), R.drawable.ic_delete_24dp, isDarkTheme).apply {
+        backgroundColor = ThemeUtils.getPrimaryColor(context)
+        deleteIconDrawable = ThemeUtils.getThemedDrawable(context, R.drawable.ic_delete_24dp, isDarkTheme).apply {
             setBounds(0, 0, iconBounds, iconBounds)
         }
-        refreshIconDrawable = ThemeUtils.getThemedDrawable(context(), R.drawable.ic_refresh_24dp, isDarkTheme).apply {
+        refreshIconDrawable = ThemeUtils.getThemedDrawable(context, R.drawable.ic_refresh_24dp, isDarkTheme).apply {
             setBounds(0, 0, iconBounds, iconBounds)
         }
-        clearIconDrawable = ThemeUtils.getThemedDrawable(context(), R.drawable.ic_clear_24dp, isDarkTheme).apply {
+        clearIconDrawable = ThemeUtils.getThemedDrawable(context, R.drawable.ic_clear_24dp, isDarkTheme).apply {
             setBounds(0, 0, iconBounds, iconBounds)
         }
 
@@ -519,14 +509,88 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
                 intent = null
             }
             presenter?.setupTabs(intent)
-            proxyUtils.checkForProxy(context())
+            proxyUtils.checkForProxy(context)
         }
     }
     //endregion
 
-    fun context(): Context = _mActivity
+    fun context(): Context = fragmentView.context
 
     private fun registerKeyEvent() {
+        ui_layout.listener = object : KeyEventView.KeyEventListener {
+            override fun ctrl_F() {
+                // Search in page
+                findInPage()
+            }
+
+            override fun ctrl_T() {
+                // Open new tab
+                presenter?.newTab(homePageInitializer, true)
+            }
+
+            override fun ctrl_W() {
+                // Close current tab
+                tabsManager.let { presenter?.deleteTab(it.indexOfCurrentTab()) }
+            }
+
+            override fun ctrl_Q() {
+                // Close browser
+                closeBrowser()
+            }
+
+            override fun ctrl_R() {
+                // Refresh current tab
+                tabsManager.currentTab?.reload()
+            }
+
+            override fun ctrl_tab() {
+                tabsManager.let {
+                    // Go forward one tab
+                    val nextIndex = if (it.indexOfCurrentTab() < it.last()) {
+                        it.indexOfCurrentTab() + 1
+                    } else {
+                        0
+                    }
+
+                    presenter?.tabChanged(nextIndex)
+                }
+            }
+
+            override fun ctrl_shift_tab() {
+                tabsManager.let {
+                    // Go back one tab
+                    val nextIndex = if (it.indexOfCurrentTab() > 0) {
+                        it.indexOfCurrentTab() - 1
+                    } else {
+                        it.last()
+                    }
+
+                    presenter?.tabChanged(nextIndex)
+                }
+            }
+
+            override fun ctrl_shift_P() {
+                presentFragment(IncognitoPage())
+            }
+
+            override fun search() {
+                // Highlight search field
+                searchView?.requestFocus()
+                searchView?.selectAll()
+            }
+
+            override fun alt_tab(number: Int) {
+                tabsManager.let {
+                    val nextIndex =
+                        if (number > it.last() + KeyEvent.KEYCODE_1 || number == KeyEvent.KEYCODE_0) {
+                            it.last()
+                        } else {
+                            number - KeyEvent.KEYCODE_1
+                        }
+                    presenter?.tabChanged(nextIndex)
+                }
+            }
+        }
         v.setOnKeyListener { v, keyCode, event ->
             if (event?.action == KeyEvent.ACTION_DOWN) {
                 if (keyCode == KeyEvent.KEYCODE_ENTER) {
@@ -566,13 +630,13 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
         R.id.tabs_toolbar_container
     }
 
-    private fun getBookmarkDrawer(): View = if (swapBookmarksAndTabs) {
+    private fun getBookmarkDrawer(): ViewGroup = if (swapBookmarksAndTabs) {
         left_drawer
     } else {
         right_drawer
     }
 
-    private fun getTabDrawer(): View = if (swapBookmarksAndTabs) {
+    private fun getTabDrawer(): ViewGroup = if (swapBookmarksAndTabs) {
         right_drawer
     } else {
         left_drawer
@@ -749,10 +813,8 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
             }
         }
 
-        val tabsFragment = manager.findFragmentByTag(TAG_TABS_FRAGMENT) as? TabsFragment
-        tabsFragment?.reinitializePreferences()
-        val bookmarksFragment = manager.findFragmentByTag(TAG_BOOKMARK_FRAGMENT) as? BookmarksFragment
-        bookmarksFragment?.reinitializePreferences()
+        tabsView?.reinitializePreferences()
+        bookmarksView?.reinitializePreferences()
 
         // TODO layout transition causing memory leak
         //        content_frame.setLayoutTransition(new LayoutTransition());
@@ -776,100 +838,6 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
             val myIntent = Intent()
             myIntent.data = Uri.parse(mUrl)
             presenter?.onNewIntent(this, myIntent)
-        }
-    }
-
-    inner class KeyEventView @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyleAttr: Int = 0
-    ) : LinearLayout(context, attrs, defStyleAttr) {
-        override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-            // Keyboard shortcuts
-            if (event.action == KeyEvent.ACTION_DOWN) {
-                when {
-                    event.isCtrlPressed -> when (event.keyCode) {
-                        KeyEvent.KEYCODE_F -> {
-                            // Search in page
-                            findInPage()
-                            return true
-                        }
-                        KeyEvent.KEYCODE_T -> {
-                            // Open new tab
-                            presenter?.newTab(homePageInitializer, true)
-                            return true
-                        }
-                        KeyEvent.KEYCODE_W -> {
-                            // Close current tab
-                            tabsManager.let { presenter?.deleteTab(it.indexOfCurrentTab()) }
-                            return true
-                        }
-                        KeyEvent.KEYCODE_Q -> {
-                            // Close browser
-                            closeBrowser()
-                            return true
-                        }
-                        KeyEvent.KEYCODE_R -> {
-                            // Refresh current tab
-                            tabsManager.currentTab?.reload()
-                            return true
-                        }
-                        KeyEvent.KEYCODE_TAB -> {
-                            tabsManager.let {
-                                val nextIndex = if (event.isShiftPressed) {
-                                    // Go back one tab
-                                    if (it.indexOfCurrentTab() > 0) {
-                                        it.indexOfCurrentTab() - 1
-                                    } else {
-                                        it.last()
-                                    }
-                                } else {
-                                    // Go forward one tab
-                                    if (it.indexOfCurrentTab() < it.last()) {
-                                        it.indexOfCurrentTab() + 1
-                                    } else {
-                                        0
-                                    }
-                                }
-
-                                presenter?.tabChanged(nextIndex)
-                            }
-
-                            return true
-                        }
-                    }
-                    event.keyCode == KeyEvent.KEYCODE_SEARCH -> {
-                        // Highlight search field
-                        searchView?.requestFocus()
-                        searchView?.selectAll()
-                        return true
-                    }
-                    event.isAltPressed -> // Alt + tab number
-                        tabsManager.let {
-                            if (KeyEvent.KEYCODE_0 <= event.keyCode && event.keyCode <= KeyEvent.KEYCODE_9) {
-                                val nextIndex =
-                                    if (event.keyCode > it.last() + KeyEvent.KEYCODE_1 || event.keyCode == KeyEvent.KEYCODE_0) {
-                                        it.last()
-                                    } else {
-                                        event.keyCode - KeyEvent.KEYCODE_1
-                                    }
-                                presenter?.tabChanged(nextIndex)
-                                return true
-                            }
-                        }
-                }
-            }
-            if (event.action == KeyEvent.ACTION_DOWN && event.isCtrlPressed) {
-                when (event.keyCode) {
-                    KeyEvent.KEYCODE_P ->
-                        // Open a new private window
-                        if (event.isShiftPressed) {
-                            startActivity(IncognitoActivity.createIntent(context))
-                            return true
-                        }
-                }
-            }
-            return super.dispatchKeyEvent(event)
         }
     }
 
@@ -1093,14 +1061,15 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
         // }, 300);
     }
 
-    override fun showBlockedLocalFileDialog(onPositiveClick: Function0<Unit>) =
-        AlertDialog.Builder(context()).apply {
-            setCancelable(true)
-            setTitle(R.string.title_warning)
-            setMessage(R.string.message_blocked_local)
-            setNegativeButton(android.R.string.cancel, null)
-            setPositiveButton(R.string.action_open) { _, _ -> onPositiveClick.invoke() }
-        }.resizeAndShow()
+    override fun showBlockedLocalFileDialog(onPositiveClick: () -> Unit) {
+        MaterialDialog(context()).show {
+            prepareShowInService()
+            title(R.string.title_warning)
+            message(R.string.message_blocked_local)
+            negativeButton(android.R.string.cancel)
+            positiveButton(R.string.action_open) { onPositiveClick() }
+        }
+    }
 
     override fun showSnackbar(@StringRes resource: Int) = Snackbar.make(v, resource, Snackbar.LENGTH_SHORT).show()
 
@@ -1582,7 +1551,7 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
     /**
      * used to allow uploading into the browser
      */
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
+    override fun onActivityResultFragment(requestCode: Int, resultCode: Int, intent: Intent?) {
         if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                 val result = if (intent == null || resultCode != Activity.RESULT_OK) {
@@ -1609,7 +1578,7 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
                 filePathCallback = null
             }
         } else {
-            super.onActivityResult(requestCode, resultCode, intent)
+            super.onActivityResultFragment(requestCode, resultCode, intent)
         }
     }
 
@@ -2095,6 +2064,7 @@ abstract class AbsBrowserPage : AbsThemeBrowserPage(), BrowserView, UIController
                     if (UserDao.getCurrentUser() != null) {
                         if (DEF.config().getBoolean(IS_FIRST_COLLECTURL, true)) {
                             MaterialDialog(context()).show {
+                                prepareShowInService()
                                 message(text = "网址不同于文章，相同网址可多次进行收藏，且不会显示收藏状态。")
                                 positiveButton(text = "知道了") {
                                     DEF.config().save(IS_FIRST_COLLECTURL, false)

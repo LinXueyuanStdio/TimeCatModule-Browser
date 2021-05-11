@@ -28,4 +28,6 @@ interface TabsView {
      * Called when the tabs are completely initialized for the first time.
      */
     fun tabsInitialized()
+
+    fun reinitializePreferences()
 }

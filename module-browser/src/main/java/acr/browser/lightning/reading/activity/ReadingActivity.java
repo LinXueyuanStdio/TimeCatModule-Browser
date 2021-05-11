@@ -18,11 +18,7 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+import com.xiaojinzi.component.anno.RouterAnno;
 
 import javax.inject.Inject;
 
@@ -37,6 +33,11 @@ import acr.browser.lightning.reading.HtmlFetcher;
 import acr.browser.lightning.reading.JResult;
 import acr.browser.lightning.utils.ThemeUtils;
 import acr.browser.lightning.utils.Utils;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
@@ -44,6 +45,7 @@ import io.reactivex.SingleOnSubscribe;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 
+@RouterAnno(hostAndPath = "browser/ReadingActivity")
 public class ReadingActivity extends AppCompatActivity {
 
     private static final String TAG = "ReadingActivity";

@@ -173,7 +173,7 @@ class TabsFragment : Fragment(), View.OnClickListener, View.OnLongClickListener,
         tabsAdapter?.notifyDataSetChanged()
     }
 
-    fun reinitializePreferences() {
+    override fun reinitializePreferences() {
         val activity = activity ?: return
         darkTheme = userPreferences.useTheme != 0 || isIncognito
         colorMode = userPreferences.colorModeEnabled

@@ -4,6 +4,7 @@ import acr.browser.lightning.BrowserApp
 import acr.browser.lightning.BuildConfig
 import acr.browser.lightning.device.BuildType
 import android.content.Context
+import android.view.View
 import androidx.fragment.app.Fragment
 import com.timecat.module.browser.page.AbsThemeBrowserPage
 
@@ -18,6 +19,8 @@ val Context.injector: AppComponent
 val Fragment.injector: AppComponent
     get() = BrowserApp.appComponent
 val AbsThemeBrowserPage.injector: AppComponent
+    get() = BrowserApp.appComponent
+val View.injector: AppComponent
     get() = BrowserApp.appComponent
 /**
  * The [AppComponent] attached to the context, note that the fragment must be attached.

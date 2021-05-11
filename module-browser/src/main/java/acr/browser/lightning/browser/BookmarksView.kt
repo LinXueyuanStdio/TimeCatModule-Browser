@@ -10,4 +10,6 @@ interface BookmarksView {
 
     fun handleBookmarkDeleted(bookmark: Bookmark)
 
+    fun reinitializePreferences()
+
 }

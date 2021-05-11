@@ -6,6 +6,7 @@ import acr.browser.lightning.browser.TabsView
 import acr.browser.lightning.browser.fragment.anim.HorizontalItemAnimator
 import acr.browser.lightning.browser.fragment.anim.VerticalItemAnimator
 import acr.browser.lightning.controller.UIController
+import acr.browser.lightning.di.injector
 import acr.browser.lightning.extensions.color
 import acr.browser.lightning.extensions.desaturate
 import acr.browser.lightning.extensions.drawTrapezoid
@@ -166,7 +167,7 @@ class TabsFrameLayout @JvmOverloads constructor(
         tabsAdapter?.notifyDataSetChanged()
     }
 
-    fun reinitializePreferences() {
+    override fun reinitializePreferences() {
         darkTheme = userPreferences.useTheme != 0 || isIncognito
         colorMode = userPreferences.colorModeEnabled
         colorMode = colorMode and !darkTheme
