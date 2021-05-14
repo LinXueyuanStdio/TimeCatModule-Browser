@@ -89,6 +89,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.same.lib.core.ActionBar
 import com.same.lib.core.ActionBarMenuItem
 import com.same.lib.drawable.MenuDrawable
+import com.same.lib.helper.LayoutHelper
 import com.timecat.component.commonsdk.utils.override.LogUtil
 import com.timecat.component.identity.Attr
 import com.timecat.component.setting.DEF
@@ -269,7 +270,6 @@ abstract class AbsBrowserPage(
 
     override fun createActionBar(context: Context): ActionBar {
         val actionBar = buildActionBar(context)
-        actionBar.setTitle("hhh")
         val menuDrawable = MenuDrawable()
         menuDrawable.setRotateToBack(true)
         actionBar.setBackButtonDrawable(menuDrawable)
@@ -290,7 +290,12 @@ abstract class AbsBrowserPage(
                 override fun onTextChanged(editText: EditText) {
                 }
             }
+            id = R.id.toolbar_layout
         }
+        tabsView = tabsFrameLayout
+        actionBar.addView(tabsFrameLayout)
+        progress_view = LayoutInflater.from(context).inflate(R.layout.browser_progress_view, null) as AnimatedProgressBar
+        actionBar.addView(progress_view, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 2f))
         // initialize background ColorDrawable
         val primaryColor = ThemeUtils.getPrimaryColor(context)
         mainHandler.post { drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, getBookmarkDrawer()) }
@@ -326,12 +331,13 @@ abstract class AbsBrowserPage(
                 }
             }
 
-            initializeSearchSuggestions(this)
+            initializeSearchSuggestions(context, this)
         }
 
         searchBackground = tabsFrameLayout.searchContainer.apply {
             // initialize search background color
-            background.setColorFilter(getSearchBarColor(primaryColor, primaryColor), PorterDuff.Mode.SRC_IN)
+            setBackgroundColor(getSearchBarColor(primaryColor, primaryColor))
+//            background.setColorFilter(, PorterDuff.Mode.SRC_IN)
         }
 
         val addItemId = 1
@@ -474,7 +480,6 @@ abstract class AbsBrowserPage(
         coordinator_layout = view.findViewById(R.id.coordinator_layout)
         drawer_layout = view.findViewById(R.id.drawer_layout)
         ui_layout = view.findViewById(R.id.ui_layout)
-        progress_view = view.findViewById(R.id.progress_view)
         content_frame = view.findViewById(R.id.content_frame)
         search_bar = view.findViewById(R.id.search_bar)
         search_query = view.findViewById(R.id.search_query)
@@ -1425,9 +1430,9 @@ abstract class AbsBrowserPage(
      * method to generate search suggestions for the AutoCompleteTextView from
      * previously searched URLs
      */
-    private fun initializeSearchSuggestions(getUrl: AutoCompleteTextView) {
+    private fun initializeSearchSuggestions(context: Context, getUrl: AutoCompleteTextView) {
 
-        suggestionsAdapter = SuggestionsAdapter(context(), isDarkTheme, isIncognito())
+        suggestionsAdapter = SuggestionsAdapter(context, isDarkTheme, isIncognito())
 
         getUrl.threshold = 1
         getUrl.dropDownWidth = -1
@@ -1945,12 +1950,9 @@ abstract class AbsBrowserPage(
 
     companion object {
 
-        private const val TAG = "BrowserActivity"
+        private const val TAG = "AbsBrowserPage"
 
         const val INTENT_PANIC_TRIGGER = "info.guardianproject.panic.action.TRIGGER"
-
-        private const val TAG_BOOKMARK_FRAGMENT = "TAG_BOOKMARK_FRAGMENT"
-        private const val TAG_TABS_FRAGMENT = "TAG_TABS_FRAGMENT"
 
         private const val FILE_CHOOSER_REQUEST_CODE = 1111
 

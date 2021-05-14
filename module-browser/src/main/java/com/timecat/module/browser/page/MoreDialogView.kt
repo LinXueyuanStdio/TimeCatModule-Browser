@@ -61,9 +61,13 @@ class MoreDialogView @JvmOverloads constructor(
 
             start_toStartOf = parent_id
             top_toTopOf = parent_id
+            setImageResource(R.drawable.ic_incognito)
+            imageTintList = iconColor
         }
         usernameView = TextView {
             layout_id = "username"
+            layout_width = wrap_content
+            layout_height = wrap_content
 
             start_toEndOf = "avatar"
             top_toTopOf = "avatar"
@@ -88,11 +92,15 @@ class MoreDialogView @JvmOverloads constructor(
 
             end_toEndOf = parent_id
             top_toTopOf = parent_id
+
+            setImageResource(R.drawable.ic_settings)
+            imageTintList = iconColor
         }
 
         newTabView = TextView {
             layout_id = "newTab"
-
+            layout_width = 0
+            layout_height = wrap_content
             start_toStartOf = parent_id
             top_toBottomOf = "avatar"
             end_toStartOf = "newIncognitoTab"
@@ -100,6 +108,7 @@ class MoreDialogView @JvmOverloads constructor(
             background_drawable = roundRectSelector()
             drawable_start = R.drawable.ic_add
             TextViewCompat.setCompoundDrawableTintList(this, iconColor)
+            padding = 20
 
             text = "新标签页"
             setShakelessClickListener {
@@ -109,7 +118,8 @@ class MoreDialogView @JvmOverloads constructor(
 
         newIncognitoTabView = TextView {
             layout_id = "newIncognitoTab"
-
+            layout_width = 0
+            layout_height = wrap_content
             end_toEndOf = parent_id
             top_toBottomOf = "avatar"
             start_toEndOf = "newTab"
@@ -117,6 +127,7 @@ class MoreDialogView @JvmOverloads constructor(
             background_drawable = roundRectSelector()
             drawable_start = R.drawable.ic_incognito
             TextViewCompat.setCompoundDrawableTintList(this, iconColor)
+            padding = 20
 
             text = "新无痕页"
             setShakelessClickListener {
