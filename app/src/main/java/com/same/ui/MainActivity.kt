@@ -24,12 +24,15 @@ import com.same.lib.util.*
 import com.same.lib.util.ColorManager.ColorEngine
 import com.same.lib.util.Lang.ILang
 import com.same.ui.lang.MyLang
+import com.timecat.component.commonsdk.utils.override.LogUtil
 import com.timecat.component.identity.Attr
 import com.xiaojinzi.component.impl.*
 
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        LogUtil.DEBUG = true
+        LogUtil.OPEN_LOG = true
         NativeLoader.initNativeLibs(application)
         MyLang.init(application)
         ColorDelegateLoader.init()

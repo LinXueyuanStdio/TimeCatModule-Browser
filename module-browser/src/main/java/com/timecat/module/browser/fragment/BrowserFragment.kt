@@ -39,6 +39,6 @@ class BrowserFragment : AbsBrowserFragment() {
     override fun isIncognito() = false
 
     override fun closeActivity() = closeDrawers {
-        performExitCleanUp()
+        closeBrowser()
     }
 }

@@ -21,6 +21,7 @@ import acr.browser.lightning.view.find.FindResults
 import android.content.Context
 import android.content.Intent
 import android.webkit.URLUtil
+import com.timecat.component.commonsdk.utils.override.LogUtil
 import io.reactivex.Scheduler
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
@@ -157,12 +158,12 @@ class BrowserPresenter(
 
     /**
      * Deletes the tab at the specified position.
-     *
+     * true:delete success, false: no need to delete
      * @param position the position at which to delete the tab.
      */
-    fun deleteTab(position: Int) {
+    fun deleteTab(position: Int): Boolean {
         logger.log(TAG, "deleting tab...")
-        val tabToDelete = tabsModel.getTabAtPosition(position) ?: return
+        val tabToDelete = tabsModel.getTabAtPosition(position) ?: return false
 
         recentTabModel.addClosedTab(tabToDelete.saveState())
 
@@ -173,8 +174,9 @@ class BrowserPresenter(
             && currentTab != null
             && URLUtil.isFileUrl(currentTab.url)
             && currentTab.url == mapHomepageToCurrentUrl()) {
+                LogUtil.se("closeActivity")
             view.closeActivity()
-            return
+            return true
         } else {
             if (isShown) {
                 view.removeTabView()
@@ -187,22 +189,29 @@ class BrowserPresenter(
 
         val afterTab = tabsModel.currentTab
         view.notifyTabViewRemoved(position)
+        LogUtil.se("notifyTabViewRemoved")
 
         if (afterTab == null) {
             view.closeBrowser()
-            return
+            LogUtil.se("closeBrowser")
+            return true
         } else if (afterTab !== currentTab) {
+            LogUtil.se("closeActivity")
             view.notifyTabViewChanged(tabsModel.indexOfCurrentTab())
         }
 
+        LogUtil.se("closeActivity")
         if (shouldClose && !isIncognito) {
             this.shouldClose = false
+            LogUtil.se("closeActivity")
             view.closeActivity()
         }
 
         view.updateTabNumber(tabsModel.size())
+        LogUtil.se("closeActivity")
 
         logger.log(TAG, "...deleted tab")
+        return false
     }
 
     /**

@@ -1275,7 +1275,7 @@ abstract class AbsBrowserPage(
                     if (customView != null || customViewCallback != null) {
                         onHideCustomView()
                     } else {
-                        presenter?.deleteTab(tabsManager.positionOf(currentTab))
+                        return presenter?.deleteTab(tabsManager.positionOf(currentTab)) == true
                     }
                     return true
                 }

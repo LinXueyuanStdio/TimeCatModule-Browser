@@ -1212,6 +1212,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
         for (n in 0 until size) {
             tabsView?.tabRemoved(0)
         }
+
     }
 
     override fun onBackPressedSupport(): Boolean {
@@ -1240,7 +1241,7 @@ abstract class AbsBrowserFragment : AbsThemeBrowserFragment(), BrowserView, UICo
                     if (customView != null || customViewCallback != null) {
                         onHideCustomView()
                     } else {
-                        presenter?.deleteTab(tabsManager.positionOf(currentTab))
+                        return presenter?.deleteTab(tabsManager.positionOf(currentTab)) == true
                     }
                 }
             } else {

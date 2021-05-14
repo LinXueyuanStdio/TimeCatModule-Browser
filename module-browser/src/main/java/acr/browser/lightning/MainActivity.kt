@@ -7,6 +7,7 @@ import android.view.KeyEvent
 import android.view.Menu
 import android.webkit.CookieManager
 import android.webkit.CookieSyncManager
+import com.timecat.component.commonsdk.utils.override.LogUtil
 import com.xiaojinzi.component.anno.RouterAnno
 import com.timecat.identity.readonly.RouterHub
 import io.reactivex.Completable
@@ -45,9 +46,9 @@ class MainActivity : BrowserActivity() {
 
     override fun isIncognito() = false
 
-    override fun closeActivity() = closeDrawers {
-        performExitCleanUp()
-        finish()
+    override fun closeActivity() {
+        LogUtil.se("closeActivity")
+        closeDrawers(this::closeBrowser)
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

@@ -85,6 +85,7 @@ import androidx.fragment.app.Fragment
 import androidx.palette.graphics.Palette
 import com.afollestad.materialdialogs.MaterialDialog
 import com.anthonycr.progress.AnimatedProgressBar
+import com.timecat.component.commonsdk.utils.override.LogUtil
 import com.timecat.component.setting.DEF
 import com.timecat.data.bmob.dao.UserDao
 import com.timecat.data.room.RoomClient
@@ -1290,6 +1291,7 @@ abstract class BrowserActivity : ThemableBrowserActivity(), BrowserView, UIContr
         }
 
     override fun closeBrowser() {
+        LogUtil.se("closeBrowser")
         content_frame.setBackgroundColor(backgroundColor)
         currentTabView.removeFromParent()
         performExitCleanUp()
@@ -1299,6 +1301,7 @@ abstract class BrowserActivity : ThemableBrowserActivity(), BrowserView, UIContr
         for (n in 0 until size) {
             tabsView?.tabRemoved(0)
         }
+        LogUtil.se("finish")
         finish()
     }
 
