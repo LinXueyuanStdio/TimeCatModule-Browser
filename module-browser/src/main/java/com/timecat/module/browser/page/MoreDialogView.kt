@@ -11,6 +11,7 @@ import androidx.core.widget.TextViewCompat
 import com.timecat.component.identity.Attr
 import com.timecat.data.bmob.data.User
 import com.timecat.layout.ui.drawabe.roundRectSelector
+import com.timecat.layout.ui.drawabe.selectableItemBackground
 import com.timecat.layout.ui.layout.*
 import com.timecat.layout.ui.utils.IconLoader
 
@@ -66,8 +67,8 @@ class MoreDialogView @JvmOverloads constructor(
         }
         usernameView = TextView {
             layout_id = "username"
-            layout_width = wrap_content
-            layout_height = wrap_content
+            layout_width = 0
+            layout_height = 0
 
             start_toEndOf = "avatar"
             top_toTopOf = "avatar"
@@ -75,6 +76,7 @@ class MoreDialogView @JvmOverloads constructor(
             end_toStartOf = "setting"
 
             text = "点击登录"
+            background = selectableItemBackground(context)
             setShakelessClickListener {
                 if (user == null) {
                     listener?.onLogin()
@@ -109,6 +111,7 @@ class MoreDialogView @JvmOverloads constructor(
             drawable_start = R.drawable.ic_add
             TextViewCompat.setCompoundDrawableTintList(this, iconColor)
             padding = 20
+            margin = 10
 
             text = "新标签页"
             setShakelessClickListener {
@@ -128,6 +131,7 @@ class MoreDialogView @JvmOverloads constructor(
             drawable_start = R.drawable.ic_incognito
             TextViewCompat.setCompoundDrawableTintList(this, iconColor)
             padding = 20
+            margin = 10
 
             text = "新无痕页"
             setShakelessClickListener {

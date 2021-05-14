@@ -295,7 +295,7 @@ abstract class AbsBrowserPage(
         tabsView = tabsFrameLayout
         actionBar.addView(tabsFrameLayout)
         progress_view = LayoutInflater.from(context).inflate(R.layout.browser_progress_view, null) as AnimatedProgressBar
-        actionBar.addView(progress_view, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 2f))
+        actionBar.addView(progress_view, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 20f))
         // initialize background ColorDrawable
         val primaryColor = ThemeUtils.getPrimaryColor(context)
         mainHandler.post { drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, getBookmarkDrawer()) }
