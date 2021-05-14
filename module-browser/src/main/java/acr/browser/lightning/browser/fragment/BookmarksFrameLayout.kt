@@ -143,7 +143,7 @@ class BookmarksFrameLayout @JvmOverloads constructor(
         onViewCreated()
     }
 
-    fun onResume() {
+    override fun onResume() {
         if (bookmarkAdapter != null) {
             setBookmarksShown(null, false)
         }

@@ -30,4 +30,5 @@ interface TabsView {
     fun tabsInitialized()
 
     fun reinitializePreferences()
+    fun onResume()
 }

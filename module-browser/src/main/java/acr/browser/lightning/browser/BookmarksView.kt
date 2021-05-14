@@ -12,4 +12,5 @@ interface BookmarksView {
 
     fun reinitializePreferences()
 
+    fun onResume()
 }

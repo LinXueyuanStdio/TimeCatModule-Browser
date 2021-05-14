@@ -21,7 +21,6 @@ import acr.browser.lightning.extensions.*
 import acr.browser.lightning.html.bookmark.BookmarkPageFactory
 import acr.browser.lightning.html.history.HistoryPageFactory
 import acr.browser.lightning.html.homepage.HomePageFactory
-import acr.browser.lightning.interpolator.BezierDecelerateInterpolator
 import acr.browser.lightning.log.Logger
 import acr.browser.lightning.notifications.IncognitoNotification
 import acr.browser.lightning.reading.activity.ReadingActivity
@@ -80,25 +79,25 @@ import androidx.appcompat.widget.*
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
-import androidx.core.view.updateLayoutParams
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.palette.graphics.Palette
 import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.bottomsheets.BottomSheet
+import com.afollestad.materialdialogs.customview.customView
 import com.anthonycr.progress.AnimatedProgressBar
 import com.google.android.material.snackbar.Snackbar
 import com.same.lib.core.ActionBar
 import com.same.lib.core.ActionBarMenuItem
 import com.same.lib.drawable.MenuDrawable
-import com.timecat.component.commonsdk.extension.toInt
 import com.timecat.component.commonsdk.utils.override.LogUtil
 import com.timecat.component.identity.Attr
 import com.timecat.component.setting.DEF
 import com.timecat.data.bmob.dao.UserDao
+import com.timecat.data.bmob.data.User
 import com.timecat.data.room.RoomClient
 import com.timecat.data.room.record.RoomRecord
 import com.timecat.element.alert.ToastUtil
 import com.timecat.identity.data.block.BLOCK_APP_WebApp
-import com.timecat.layout.ui.utils.ScreenUtil
 import com.timecat.module.browser.KeyEventView
 import com.timecat.module.browser.prepareShowInService
 import io.reactivex.Completable
@@ -146,7 +145,6 @@ abstract class AbsBrowserPage(
     private var hideStatusBar: Boolean = false
     private var isDarkTheme: Boolean = false
     private var isImmersiveMode = false
-    private var shouldShowTabsInDrawer: Boolean = false
     private var swapBookmarksAndTabs: Boolean = false
 
     private var backgroundColor: Int = 0
@@ -242,6 +240,7 @@ abstract class AbsBrowserPage(
     }
     //endregion
 
+    //region config
     open fun theme(): Int = R.style.ThemeLight
 
     abstract fun menu(): Int
@@ -268,6 +267,7 @@ abstract class AbsBrowserPage(
      * An observable which asynchronously updates the user's cookie preferences.
      */
     protected abstract fun updateCookiePreference(): Completable
+    //endregion
 
     override fun createActionBar(context: Context): ActionBar {
         val actionBar = buildActionBar(context)
@@ -292,7 +292,99 @@ abstract class AbsBrowserPage(
                 }
             })
         }
-        menu.addItem(1, R.drawable.ic_close).apply {
+
+
+        val tabsFrameLayout = TabsFrameLayout.createTabsView(context, isIncognito(), this)
+        // initialize background ColorDrawable
+        val primaryColor = ThemeUtils.getPrimaryColor(context)
+        backgroundDrawable.color = primaryColor
+        // set display options of the ActionBar
+        val inflater = LayoutInflater.from(context)
+        val customView = inflater.inflate(R.layout.browser_toolbar_content, actionBar, false)
+        actionBar.addView(customView)
+
+        customView.layoutParams = customView.layoutParams.apply {
+            width = LayoutParams.MATCH_PARENT
+            height = LayoutParams.MATCH_PARENT
+        }
+
+        arrowImageView = customView.findViewById<ImageView>(R.id.arrow).also {
+            if (shouldShowTabsInDrawer) {
+                if (it.width <= 0) {
+                    it.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+                }
+                updateTabNumber(0)
+
+                // Post drawer locking in case the activity is being recreated
+                mainHandler.post { drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, getTabDrawer()) }
+            } else {
+
+                // Post drawer locking in case the activity is being recreated
+                mainHandler.post {
+                    drawer_layout.setDrawerLockMode(
+                        DrawerLayout.LOCK_MODE_LOCKED_CLOSED,
+                        getTabDrawer()
+                    )
+                }
+                it.setImageResource(R.drawable.ic_action_home)
+                it.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
+            }
+        }
+
+        // Post drawer locking in case the activity is being recreated
+        mainHandler.post { drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, getBookmarkDrawer()) }
+
+        customView.findViewById<FrameLayout>(R.id.arrow_button).setOnClickListener(this)
+
+        val iconBounds = Utils.dpToPx(24f)
+        backgroundColor = ThemeUtils.getPrimaryColor(context)
+        deleteIconDrawable = ThemeUtils.getThemedDrawable(context, R.drawable.ic_delete_24dp, isDarkTheme).apply {
+            setBounds(0, 0, iconBounds, iconBounds)
+        }
+        refreshIconDrawable = ThemeUtils.getThemedDrawable(context, R.drawable.ic_refresh_24dp, isDarkTheme).apply {
+            setBounds(0, 0, iconBounds, iconBounds)
+        }
+        clearIconDrawable = ThemeUtils.getThemedDrawable(context, R.drawable.ic_clear_24dp, isDarkTheme).apply {
+            setBounds(0, 0, iconBounds, iconBounds)
+        }
+
+        // create the search EditText in the ToolBar
+        searchView = customView.findViewById<acr.browser.lightning.view.SearchView>(R.id.search).apply {
+            setHintTextColor(ThemeUtils.getThemedTextHintColor(isDarkTheme))
+            setTextColor(if (isDarkTheme) Color.WHITE else Color.BLACK)
+            iconDrawable = refreshIconDrawable
+            compoundDrawablePadding = Utils.dpToPx(3f)
+            setCompoundDrawablesWithIntrinsicBounds(sslDrawable, null, refreshIconDrawable, null)
+
+            val searchListener = SearchListenerClass()
+            setOnKeyListener(searchListener)
+            onFocusChangeListener = searchListener
+            setOnEditorActionListener(searchListener)
+            onPreFocusListener = searchListener
+            addTextChangedListener(searchListener)
+
+            initializeSearchSuggestions(this)
+        }
+
+        searchView?.onRightDrawableClickListener = {
+            if (it.hasFocus()) {
+                it.setText("")
+            } else {
+                refreshOrStop()
+            }
+        }
+
+        searchBackground = customView.findViewById<View>(R.id.search_container).apply {
+            // initialize search background color
+            background.setColorFilter(getSearchBarColor(primaryColor, primaryColor), PorterDuff.Mode.SRC_IN)
+        }
+
+        val addItemId = 1
+        val moreItemId = 2
+        menu.addItem(addItemId, R.drawable.ic_add).apply {
+            setIconColor(iconColor)
+        }
+        menu.addItem(moreItemId, R.drawable.ic_more_vert_black_24dp).apply {
             setIconColor(iconColor)
         }
         actionBar.setActionBarMenuOnItemClick(object : ActionBar.ActionBarMenuOnItemClick() {
@@ -300,15 +392,71 @@ abstract class AbsBrowserPage(
                 when (id) {
                     -1 -> {
                     }
-                    1 -> {
-                        LogUtil.se("MENU_STATUS")
-                        finishFragment(false)
+                    addItemId -> {
+                    }
+                    moreItemId -> {
+                        MaterialDialog(context, BottomSheet()).show {
+                            val view = MoreDialogView(context)
+                            val currentView = tabsManager.currentTab
+                            val currentUrl = currentView?.url
+                            view.listener = object :MoreDialogView.Listener{
+                                override fun onToggleBookmark(check: Boolean) {
+                                    snackbar("onToggleBookmark")
+                                }
+
+                                override fun onLogin() {
+                                    snackbar("onLogin")
+                                }
+
+                                override fun onClickUser(user: User) {
+                                    snackbar("onClickUser")
+                                }
+
+                                override fun onSetting() {
+                                    snackbar("onSetting")
+                                }
+
+                                override fun onNewTab() {
+                                    presenter?.newTab(homePageInitializer, true)
+                                }
+
+                                override fun onNewIncognitoTab() {
+                                    presentFragment(IncognitoPage())
+                                }
+
+                                override fun openBookmarkOrHistory() {
+                                    snackbar("openBookmarkOrHistory")
+                                }
+
+                                override fun openDownload() {
+                                    openDownloads()
+                                }
+
+                                override fun onRefreshCurrentWeb() {
+                                    snackbar("onRefreshCurrentWeb")
+                                }
+
+                                override fun onCopyLink() {
+                                    snackbar("onCopyLink")
+                                }
+
+                                override fun onShare() {
+                                    IntentUtils(context).shareUrl(currentUrl, currentView?.title)
+                                }
+
+                                override fun openProperty() {
+                                    snackbar("openProperty")
+                                }
+                            }
+                            customView(view = view)
+                        }
                     }
                 }
             }
         })
         return actionBar
     }
+
     lateinit var v: View
 
     private lateinit var coordinator_layout: CoordinatorLayout
@@ -390,12 +538,9 @@ abstract class AbsBrowserPage(
 
     private fun initialize(context: Context) {
         registerKeyEvent()
-        initializeToolbarHeight(context.resources.configuration)
-        toolbar.inflateMenu(menu())
-        onCreateOptionsMenu(toolbar.menu)
-        toolbar.setOnMenuItemClickListener(this)
-
-        val actionBar = toolbar
+//        toolbar.inflateMenu(menu())
+//        onCreateOptionsMenu(toolbar.menu)
+//        toolbar.setOnMenuItemClickListener(this)
 
         //TODO make sure dark theme flag gets set correctly
         isDarkTheme = userPreferences.useTheme != 0 || isIncognito()
@@ -405,12 +550,7 @@ abstract class AbsBrowserPage(
         } else {
             ContextCompat.getColor(context, R.color.icon_light_theme_disabled)
         }
-        shouldShowTabsInDrawer = userPreferences.showTabsInDrawer
         swapBookmarksAndTabs = userPreferences.bookmarksAndTabsSwapped
-
-        // initialize background ColorDrawable
-        val primaryColor = ThemeUtils.getPrimaryColor(context)
-        backgroundDrawable.color = primaryColor
 
         // Drawer stutters otherwise
         left_drawer.setLayerType(View.LAYER_TYPE_NONE, null)
@@ -440,7 +580,7 @@ abstract class AbsBrowserPage(
         webPageBitmap = ThemeUtils.getThemedBitmap(context, R.drawable.ic_webpage, isDarkTheme)
 
         val bookmarksFrameLayout = BookmarksFrameLayout.createBookmarksView(context, isIncognito(), this)
-        val tabsFrameLayout = TabsFrameLayout.createTabsView(context, isIncognito(), shouldShowTabsInDrawer, this)
+        val tabsFrameLayout = TabsFrameLayout.createTabsView(context, isIncognito(), this)
 
         tabsView = tabsFrameLayout
         bookmarksView = bookmarksFrameLayout
@@ -452,91 +592,6 @@ abstract class AbsBrowserPage(
         val bookmarkDrawer = getBookmarkDrawer()
         bookmarkDrawer.removeAllViews()
         bookmarkDrawer.addView(bookmarksFrameLayout)
-
-        if (shouldShowTabsInDrawer) {
-            toolbar_layout.removeView(tabs_toolbar_container)
-        }
-
-        // set display options of the ActionBar
-        val inflater = LayoutInflater.from(context)
-        val customView = inflater.inflate(R.layout.browser_toolbar_content, actionBar, false)
-        actionBar.addView(customView)
-
-        customView.layoutParams = customView.layoutParams.apply {
-            width = LayoutParams.MATCH_PARENT
-            height = LayoutParams.MATCH_PARENT
-        }
-
-        arrowImageView = customView.findViewById<ImageView>(R.id.arrow).also {
-            if (shouldShowTabsInDrawer) {
-                if (it.width <= 0) {
-                    it.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
-                }
-                updateTabNumber(0)
-
-                // Post drawer locking in case the activity is being recreated
-                mainHandler.post { drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, getTabDrawer()) }
-            } else {
-
-                // Post drawer locking in case the activity is being recreated
-                mainHandler.post {
-                    drawer_layout.setDrawerLockMode(
-                        DrawerLayout.LOCK_MODE_LOCKED_CLOSED,
-                        getTabDrawer()
-                    )
-                }
-                it.setImageResource(R.drawable.ic_action_home)
-                it.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
-            }
-        }
-
-        // Post drawer locking in case the activity is being recreated
-        mainHandler.post { drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, getBookmarkDrawer()) }
-
-        customView.findViewById<FrameLayout>(R.id.arrow_button).setOnClickListener(this)
-
-        val iconBounds = Utils.dpToPx(24f)
-        backgroundColor = ThemeUtils.getPrimaryColor(context)
-        deleteIconDrawable = ThemeUtils.getThemedDrawable(context, R.drawable.ic_delete_24dp, isDarkTheme).apply {
-            setBounds(0, 0, iconBounds, iconBounds)
-        }
-        refreshIconDrawable = ThemeUtils.getThemedDrawable(context, R.drawable.ic_refresh_24dp, isDarkTheme).apply {
-            setBounds(0, 0, iconBounds, iconBounds)
-        }
-        clearIconDrawable = ThemeUtils.getThemedDrawable(context, R.drawable.ic_clear_24dp, isDarkTheme).apply {
-            setBounds(0, 0, iconBounds, iconBounds)
-        }
-
-        // create the search EditText in the ToolBar
-        searchView = customView.findViewById<acr.browser.lightning.view.SearchView>(R.id.search).apply {
-            setHintTextColor(ThemeUtils.getThemedTextHintColor(isDarkTheme))
-            setTextColor(if (isDarkTheme) Color.WHITE else Color.BLACK)
-            iconDrawable = refreshIconDrawable
-            compoundDrawablePadding = Utils.dpToPx(3f)
-            setCompoundDrawablesWithIntrinsicBounds(sslDrawable, null, refreshIconDrawable, null)
-
-            val searchListener = SearchListenerClass()
-            setOnKeyListener(searchListener)
-            onFocusChangeListener = searchListener
-            setOnEditorActionListener(searchListener)
-            onPreFocusListener = searchListener
-            addTextChangedListener(searchListener)
-
-            initializeSearchSuggestions(this)
-        }
-
-        searchView?.onRightDrawableClickListener = {
-            if (it.hasFocus()) {
-                it.setText("")
-            } else {
-                refreshOrStop()
-            }
-        }
-
-        searchBackground = customView.findViewById<View>(R.id.search_container).apply {
-            // initialize search background color
-            background.setColorFilter(getSearchBarColor(primaryColor, primaryColor), PorterDuff.Mode.SRC_IN)
-        }
 
         drawer_layout.setDrawerShadow(R.drawable.drawer_right_shadow, GravityCompat.END)
         drawer_layout.setDrawerShadow(R.drawable.drawer_left_shadow, GravityCompat.START)
@@ -654,22 +709,6 @@ abstract class AbsBrowserPage(
             return@setOnKeyListener false
         }
 
-    }
-
-    private fun getBookmarksFragmentViewId(): Int = if (swapBookmarksAndTabs) {
-        R.id.left_drawer
-    } else {
-        R.id.right_drawer
-    }
-
-    private fun getTabsFragmentViewId(): Int = if (shouldShowTabsInDrawer) {
-        if (swapBookmarksAndTabs) {
-            R.id.right_drawer
-        } else {
-            R.id.left_drawer
-        }
-    } else {
-        R.id.tabs_toolbar_container
     }
 
     private fun getBookmarkDrawer(): ViewGroup = if (swapBookmarksAndTabs) {
@@ -790,8 +829,6 @@ abstract class AbsBrowserPage(
 
             if (v === tabsDrawer) {
                 drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, bookmarksDrawer)
-            } else if (shouldShowTabsInDrawer) {
-                drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, tabsDrawer)
             }
         }
 
@@ -1212,26 +1249,7 @@ abstract class AbsBrowserPage(
             toolbar_layout.translationY = 0f
             setWebViewTranslation(toolbar_layout.height.toFloat())
         }
-
-//        invalidateOptionsMenu()
-        initializeToolbarHeight(newConfig)
     }
-
-    private fun initializeToolbarHeight(configuration: Configuration) =
-        ui_layout.doOnLayout {
-            // TODO externalize the dimensions
-            val toolbarSize = if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                // In portrait toolbar should be 56 dp tall
-                Utils.dpToPx(56f)
-            } else {
-                // In landscape toolbar should be 48 dp tall
-                Utils.dpToPx(52f)
-            }
-            toolbar.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, toolbarSize)
-            toolbar.minimumHeight = toolbarSize
-            toolbar.doOnLayout { setWebViewTranslation(toolbar_layout.height.toFloat()) }
-            toolbar.requestLayout()
-        }
 
     override fun closeBrowser() {
         content_frame.setBackgroundColor(backgroundColor)
@@ -1323,6 +1341,8 @@ abstract class AbsBrowserPage(
         }
         tabsManager.resumeAll()
         initializePreferences()
+        tabsView?.onResume()
+        bookmarksView?.onResume()
 
         if (isFullScreen) {
             overlayToolbarOnWebView()
@@ -1375,15 +1395,13 @@ abstract class AbsBrowserPage(
             val color = Color.BLACK or (palette?.getVibrantColor(defaultColor) ?: defaultColor)
 
             // Lighten up the dark color if it is too dark
-            val finalColor = if (!shouldShowTabsInDrawer || Utils.isColorTooDark(color)) {
+            val finalColor = if (Utils.isColorTooDark(color)) {
                 Utils.mixTwoColors(defaultColor, color, 0.25f)
             } else {
                 color
             }
 
-            if (!shouldShowTabsInDrawer) {
                 v.setBackground(ColorDrawable(Color.BLACK))
-            }
 
             val startSearchColor = getSearchBarColor(currentUiColor, defaultColor)
             val finalSearchColor = getSearchBarColor(finalColor, defaultColor)
@@ -1391,12 +1409,7 @@ abstract class AbsBrowserPage(
             val animation = object : Animation() {
                 override fun applyTransformation(interpolatedTime: Float, t: Transformation) {
                     val animatedColor = DrawableUtils.mixColor(interpolatedTime, currentUiColor, finalColor)
-                    if (shouldShowTabsInDrawer) {
-                        backgroundDrawable.color = animatedColor
-                        mainHandler.post { v.setBackground(backgroundDrawable) }
-                    } else {
-                        tabBackground?.setColorFilter(animatedColor, PorterDuff.Mode.SRC_IN)
-                    }
+                    tabBackground?.setColorFilter(animatedColor, PorterDuff.Mode.SRC_IN)
                     currentUiColor = animatedColor
                     toolbar_layout.setBackgroundColor(animatedColor)
                     searchBackground?.background?.setColorFilter(
@@ -1437,18 +1450,18 @@ abstract class AbsBrowserPage(
     }
 
     override fun updateTabNumber(number: Int) {
-        if (shouldShowTabsInDrawer) {
-            if (isIncognito()) {
-                arrowImageView?.setImageDrawable(ThemeUtils.getThemedDrawable(context(), R.drawable.incognito_mode, true))
-            } else {
-                arrowImageView?.setImageBitmap(
-                    DrawableUtils.getRoundedNumberImage(
-                        number, Utils.dpToPx(24f),
-                        Utils.dpToPx(24f), ThemeUtils.getIconThemeColor(context(), isDarkTheme), Utils.dpToPx(2.5f)
-                    )
-                )
-            }
-        }
+//        if (shouldShowTabsInDrawer) {
+//            if (isIncognito()) {
+//                arrowImageView?.setImageDrawable(ThemeUtils.getThemedDrawable(context(), R.drawable.incognito_mode, true))
+//            } else {
+//                arrowImageView?.setImageBitmap(
+//                    DrawableUtils.getRoundedNumberImage(
+//                        number, Utils.dpToPx(24f),
+//                        Utils.dpToPx(24f), ThemeUtils.getIconThemeColor(context(), isDarkTheme), Utils.dpToPx(2.5f)
+//                    )
+//                )
+//            }
+//        }
     }
 
     override fun updateProgress(progress: Int) {
@@ -1842,20 +1855,20 @@ abstract class AbsBrowserPage(
      */
     override fun hideActionBar() {
         if (isFullScreen) {
-            val height = toolbar_layout.height
-            if (toolbar_layout.translationY > -0.01f) {
-                val hideAnimation = object : Animation() {
-                    override fun applyTransformation(interpolatedTime: Float, t: Transformation) {
-                        val trans = interpolatedTime * height
-                        toolbar_layout.translationY = -trans
-                        actionBar.translationY =  -trans
-                        setWebViewTranslation(height - trans)
-                    }
-                }
-                hideAnimation.duration = 250
-                hideAnimation.interpolator = BezierDecelerateInterpolator()
-                content_frame.startAnimation(hideAnimation)
-            }
+//            val height = toolbar_layout.height
+//            if (toolbar_layout.translationY > -0.01f) {
+//                val hideAnimation = object : Animation() {
+//                    override fun applyTransformation(interpolatedTime: Float, t: Transformation) {
+//                        val trans = interpolatedTime * height
+//                        toolbar_layout.translationY = -trans
+//                        actionBar.translationY = -trans
+//                        setWebViewTranslation(height - trans)
+//                    }
+//                }
+//                hideAnimation.duration = 250
+//                hideAnimation.interpolator = BezierDecelerateInterpolator()
+//                content_frame.startAnimation(hideAnimation)
+//            }
         }
     }
 
@@ -1866,27 +1879,27 @@ abstract class AbsBrowserPage(
      */
     override fun showActionBar() {
         if (isFullScreen) {
-            logger.log(TAG, "showActionBar")
-            var height = toolbar_layout.height
-            if (height == 0) {
-                toolbar_layout.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
-                height = toolbar_layout.measuredHeight
-            }
-
-            val totalHeight = height
-            if (toolbar_layout.translationY < -(height - 0.01f)) {
-                val show = object : Animation() {
-                    override fun applyTransformation(interpolatedTime: Float, t: Transformation) {
-                        val trans = interpolatedTime * totalHeight
-                        toolbar_layout.translationY = trans - totalHeight
-                        actionBar.translationY = trans - totalHeight
-                        setWebViewTranslation(trans)
-                    }
-                }
-                show.duration = 250
-                show.interpolator = BezierDecelerateInterpolator()
-                content_frame.startAnimation(show)
-            }
+//            logger.log(TAG, "showActionBar")
+//            var height = toolbar_layout.height
+//            if (height == 0) {
+//                toolbar_layout.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+//                height = toolbar_layout.measuredHeight
+//            }
+//
+//            val totalHeight = height
+//            if (toolbar_layout.translationY < -(height - 0.01f)) {
+//                val show = object : Animation() {
+//                    override fun applyTransformation(interpolatedTime: Float, t: Transformation) {
+//                        val trans = interpolatedTime * totalHeight
+//                        toolbar_layout.translationY = trans - totalHeight
+//                        actionBar.translationY = trans - totalHeight
+//                        setWebViewTranslation(trans)
+//                    }
+//                }
+//                show.duration = 250
+//                show.interpolator = BezierDecelerateInterpolator()
+//                content_frame.startAnimation(show)
+//            }
         }
     }
 
