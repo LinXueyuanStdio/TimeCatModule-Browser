@@ -122,7 +122,6 @@ abstract class AbsBrowserPage(
     // Toolbar Views
     private var searchBackground: View? = null
     private var searchView: acr.browser.lightning.view.SearchView? = null
-    private var arrowImageView: ImageView? = null
 
     // Current tab view being displayed
     private var currentTabView: View? = null
@@ -220,7 +219,6 @@ abstract class AbsBrowserPage(
 
     // Image
     private var webPageBitmap: Bitmap? = null
-    private val backgroundDrawable = ColorDrawable()
     private var deleteIconDrawable: Drawable? = null
     private var refreshIconDrawable: Drawable? = null
     private var clearIconDrawable: Drawable? = null
@@ -278,66 +276,26 @@ abstract class AbsBrowserPage(
 
         val iconColor = Attr.getIconColor(context)
         val menu = actionBar.createMenu()
-        menu.addItem(100, R.drawable.ic_search).apply {
-            setIconColor(iconColor)
-            setIsSearchField(true)
-            setActionBarMenuItemSearchListener(object : ActionBarMenuItem.ActionBarMenuItemSearchListener() {
+        val tabsFrameLayout = TabsFrameLayout.createTabsView(context, isIncognito(), this).apply {
+            bindSearch(actionBar)
+            listener = object : ActionBarMenuItem.ActionBarMenuItemSearchListener() {
                 override fun onSearchExpand() {
                 }
 
                 override fun onSearchCollapse() {
+                    val currentTab = tabsManager.currentTab ?: return
+                    currentTab.requestFocus()
                 }
 
                 override fun onTextChanged(editText: EditText) {
                 }
-            })
-        }
-
-
-        val tabsFrameLayout = TabsFrameLayout.createTabsView(context, isIncognito(), this)
-        // initialize background ColorDrawable
-        val primaryColor = ThemeUtils.getPrimaryColor(context)
-        backgroundDrawable.color = primaryColor
-        // set display options of the ActionBar
-        val inflater = LayoutInflater.from(context)
-        val customView = inflater.inflate(R.layout.browser_toolbar_content, actionBar, false)
-        actionBar.addView(customView)
-
-        customView.layoutParams = customView.layoutParams.apply {
-            width = LayoutParams.MATCH_PARENT
-            height = LayoutParams.MATCH_PARENT
-        }
-
-        arrowImageView = customView.findViewById<ImageView>(R.id.arrow).also {
-            if (shouldShowTabsInDrawer) {
-                if (it.width <= 0) {
-                    it.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
-                }
-                updateTabNumber(0)
-
-                // Post drawer locking in case the activity is being recreated
-                mainHandler.post { drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, getTabDrawer()) }
-            } else {
-
-                // Post drawer locking in case the activity is being recreated
-                mainHandler.post {
-                    drawer_layout.setDrawerLockMode(
-                        DrawerLayout.LOCK_MODE_LOCKED_CLOSED,
-                        getTabDrawer()
-                    )
-                }
-                it.setImageResource(R.drawable.ic_action_home)
-                it.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
             }
         }
-
-        // Post drawer locking in case the activity is being recreated
+        // initialize background ColorDrawable
+        val primaryColor = ThemeUtils.getPrimaryColor(context)
         mainHandler.post { drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, getBookmarkDrawer()) }
-
-        customView.findViewById<FrameLayout>(R.id.arrow_button).setOnClickListener(this)
-
         val iconBounds = Utils.dpToPx(24f)
-        backgroundColor = ThemeUtils.getPrimaryColor(context)
+        backgroundColor = primaryColor
         deleteIconDrawable = ThemeUtils.getThemedDrawable(context, R.drawable.ic_delete_24dp, isDarkTheme).apply {
             setBounds(0, 0, iconBounds, iconBounds)
         }
@@ -349,9 +307,7 @@ abstract class AbsBrowserPage(
         }
 
         // create the search EditText in the ToolBar
-        searchView = customView.findViewById<acr.browser.lightning.view.SearchView>(R.id.search).apply {
-            setHintTextColor(ThemeUtils.getThemedTextHintColor(isDarkTheme))
-            setTextColor(if (isDarkTheme) Color.WHITE else Color.BLACK)
+        searchView = tabsFrameLayout.searchField.apply {
             iconDrawable = refreshIconDrawable
             compoundDrawablePadding = Utils.dpToPx(3f)
             setCompoundDrawablesWithIntrinsicBounds(sslDrawable, null, refreshIconDrawable, null)
@@ -362,19 +318,18 @@ abstract class AbsBrowserPage(
             setOnEditorActionListener(searchListener)
             onPreFocusListener = searchListener
             addTextChangedListener(searchListener)
+            onRightDrawableClickListener = {
+                if (it.hasFocus()) {
+                    it.setText("")
+                } else {
+                    refreshOrStop()
+                }
+            }
 
             initializeSearchSuggestions(this)
         }
 
-        searchView?.onRightDrawableClickListener = {
-            if (it.hasFocus()) {
-                it.setText("")
-            } else {
-                refreshOrStop()
-            }
-        }
-
-        searchBackground = customView.findViewById<View>(R.id.search_container).apply {
+        searchBackground = tabsFrameLayout.searchContainer.apply {
             // initialize search background color
             background.setColorFilter(getSearchBarColor(primaryColor, primaryColor), PorterDuff.Mode.SRC_IN)
         }
@@ -462,9 +417,6 @@ abstract class AbsBrowserPage(
     private lateinit var coordinator_layout: CoordinatorLayout
     private lateinit var drawer_layout: DrawerLayout
     private lateinit var ui_layout: KeyEventView
-    private lateinit var toolbar_layout: LinearLayout
-    private lateinit var tabs_toolbar_container: FrameLayout
-    private lateinit var toolbar: androidx.appcompat.widget.Toolbar
     private lateinit var progress_view: AnimatedProgressBar
     private lateinit var content_frame: FrameLayout
     private lateinit var search_bar: RelativeLayout
@@ -522,9 +474,6 @@ abstract class AbsBrowserPage(
         coordinator_layout = view.findViewById(R.id.coordinator_layout)
         drawer_layout = view.findViewById(R.id.drawer_layout)
         ui_layout = view.findViewById(R.id.ui_layout)
-        toolbar_layout = view.findViewById(R.id.toolbar_layout)
-        tabs_toolbar_container = view.findViewById(R.id.tabs_toolbar_container)
-        toolbar = view.findViewById(R.id.toolbar)
         progress_view = view.findViewById(R.id.progress_view)
         content_frame = view.findViewById(R.id.content_frame)
         search_bar = view.findViewById(R.id.search_bar)
@@ -908,8 +857,8 @@ abstract class AbsBrowserPage(
     }
 
     public fun onWindowVisibleToUserAfterResume() {
-        toolbar_layout.translationY = 0f
-        setWebViewTranslation(toolbar_layout.height.toFloat())
+        actionBar.translationY = 0f
+        setWebViewTranslation(actionBar.height.toFloat())
     }
 
     public fun openUrl(mUrl: String) {
@@ -967,23 +916,11 @@ abstract class AbsBrowserPage(
     }
 
     private fun putToolbarInRoot() {
-        if (toolbar_layout.parent != ui_layout) {
-            (toolbar_layout.parent as ViewGroup?)?.removeView(toolbar_layout)
-
-            ui_layout.addView(toolbar_layout, 0)
-            ui_layout.requestLayout()
-        }
         setWebViewTranslation(0f)
     }
 
     private fun overlayToolbarOnWebView() {
-        if (toolbar_layout.parent != content_frame) {
-            (toolbar_layout.parent as ViewGroup?)?.removeView(toolbar_layout)
-
-            content_frame.addView(toolbar_layout)
-            content_frame.requestLayout()
-        }
-        setWebViewTranslation(toolbar_layout.height.toFloat())
+        setWebViewTranslation(actionBar.height.toFloat())
     }
 
     private fun setWebViewTranslation(translation: Float) =
@@ -1114,7 +1051,7 @@ abstract class AbsBrowserPage(
 
         content_frame.addView(view, 0, MATCH_PARENT)
         if (isFullScreen) {
-            view.translationY = toolbar_layout.height + toolbar_layout.translationY
+            view.translationY = actionBar.height + actionBar.translationY
         } else {
             view.translationY = 0f
         }
@@ -1156,7 +1093,13 @@ abstract class AbsBrowserPage(
         presenter?.deleteTab(position)
     }
 
-    override fun tabClicked(position: Int) = showTab(position)
+    override fun tabClicked(position: Int) {
+        if (tabsManager.indexOfCurrentTab() == position) {
+            actionBar.openSearchField(tabsManager.currentTab?.url, true)
+        } else{
+            showTab(position)
+        }
+    }
 
     override fun newTabButtonClicked() {
         presenter?.newTab(homePageInitializer, true)
@@ -1208,7 +1151,6 @@ abstract class AbsBrowserPage(
      *
      * @param position the position of the tab to display
      */
-    // TODO move to presenter
     private fun showTab(position: Int) {
         presenter?.tabChanged(position)
     }
@@ -1246,8 +1188,8 @@ abstract class AbsBrowserPage(
 
         if (isFullScreen) {
             showActionBar()
-            toolbar_layout.translationY = 0f
-            setWebViewTranslation(toolbar_layout.height.toFloat())
+            actionBar.translationY = 0f
+            setWebViewTranslation(actionBar.height.toFloat())
         }
     }
 
@@ -1411,7 +1353,7 @@ abstract class AbsBrowserPage(
                     val animatedColor = DrawableUtils.mixColor(interpolatedTime, currentUiColor, finalColor)
                     tabBackground?.setColorFilter(animatedColor, PorterDuff.Mode.SRC_IN)
                     currentUiColor = animatedColor
-                    toolbar_layout.setBackgroundColor(animatedColor)
+                    actionBar.setBackgroundColor(animatedColor)
                     searchBackground?.background?.setColorFilter(
                         DrawableUtils.mixColor(
                             interpolatedTime,
@@ -1421,7 +1363,7 @@ abstract class AbsBrowserPage(
                 }
             }
             animation.duration = 300
-            toolbar_layout.startAnimation(animation)
+            actionBar.startAnimation(animation)
         }
     }
 
@@ -1979,13 +1921,7 @@ abstract class AbsBrowserPage(
      * @param v the view that the user has clicked
      */
     override fun onClick(v: View) {
-        val currentTab = tabsManager.currentTab ?: return
         when (v.id) {
-            R.id.arrow_button -> when {
-                searchView?.hasFocus() == true -> currentTab.requestFocus()
-                shouldShowTabsInDrawer -> drawer_layout.openDrawer(getTabDrawer())
-                else -> currentTab.loadHomePage()
-            }
             R.id.button_next -> findResult?.nextResult()
             R.id.button_back -> findResult?.previousResult()
             R.id.button_quit -> {

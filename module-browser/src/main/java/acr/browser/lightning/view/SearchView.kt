@@ -2,12 +2,15 @@ package acr.browser.lightning.view
 
 import acr.browser.lightning.R
 import android.content.Context
+import android.text.InputType
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.ViewConfiguration
+import android.view.inputmethod.EditorInfo
 import androidx.appcompat.widget.AppCompatAutoCompleteTextView
+import com.timecat.layout.ui.layout.hint_text_res
 
-class SearchView @JvmOverloads constructor(
+open class SearchView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = R.attr.autoCompleteTextViewStyle
@@ -52,4 +55,13 @@ class SearchView @JvmOverloads constructor(
         System.currentTimeMillis() - actionDownTime >= ViewConfiguration.getLongPressTimeout()
 
 
+    init {
+        hint_text_res = R.string.search_hint
+        imeOptions = EditorInfo.IME_ACTION_GO
+        inputType = InputType.TYPE_TEXT_VARIATION_URI
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            importantForAutofill = IMPORTANT_FOR_AUTOFILL_NO
+        }
+
+    }
 }
