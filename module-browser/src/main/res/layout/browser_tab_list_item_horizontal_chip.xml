@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.chip.Chip xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/chip"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:ellipsize="end"
+    android:fontFamily="sans-serif"
+    android:maxLength="20"
+    android:maxLines="1"
+    android:singleLine="true"
+    app:chipIcon="@drawable/ic_browser"
+    app:closeIcon="@drawable/ic_close"
+    app:closeIconEnabled="true" />
+

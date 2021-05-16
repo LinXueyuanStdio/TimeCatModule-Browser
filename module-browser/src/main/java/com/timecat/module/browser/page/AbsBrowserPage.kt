@@ -99,6 +99,11 @@ import com.timecat.data.room.RoomClient
 import com.timecat.data.room.record.RoomRecord
 import com.timecat.element.alert.ToastUtil
 import com.timecat.identity.data.block.BLOCK_APP_WebApp
+import com.timecat.layout.ui.layout.layout_gravity
+import com.timecat.layout.ui.layout.margin_end
+import com.timecat.layout.ui.layout.margin_start
+import com.timecat.layout.ui.layout.margin_top
+import com.timecat.layout.ui.utils.ScreenUtil
 import com.timecat.module.browser.KeyEventView
 import com.timecat.module.browser.prepareShowInService
 import io.reactivex.Completable
@@ -293,9 +298,14 @@ abstract class AbsBrowserPage(
             id = R.id.toolbar_layout
         }
         tabsView = tabsFrameLayout
-        actionBar.addView(tabsFrameLayout)
+        actionBar.addView(tabsFrameLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.BOTTOM))
+        tabsFrameLayout.apply {
+            margin_start = 48
+            margin_end = 96
+            margin_top = ScreenUtil.getStatusBarHeight(context)
+        }
         progress_view = LayoutInflater.from(context).inflate(R.layout.browser_progress_view, null) as AnimatedProgressBar
-        actionBar.addView(progress_view, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 20f))
+        actionBar.addView(progress_view, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 4, Gravity.BOTTOM))
         // initialize background ColorDrawable
         val primaryColor = ThemeUtils.getPrimaryColor(context)
         mainHandler.post { drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, getBookmarkDrawer()) }
@@ -352,8 +362,10 @@ abstract class AbsBrowserPage(
             override fun onItemClick(id: Int) {
                 when (id) {
                     -1 -> {
+                        finishFragment(true)
                     }
                     addItemId -> {
+                        presenter?.newTab(homePageInitializer, true)
                     }
                     moreItemId -> {
                         MaterialDialog(context, BottomSheet()).show {
@@ -534,14 +546,13 @@ abstract class AbsBrowserPage(
         webPageBitmap = ThemeUtils.getThemedBitmap(context, R.drawable.ic_webpage, isDarkTheme)
 
         val bookmarksFrameLayout = BookmarksFrameLayout.createBookmarksView(context, isIncognito(), this)
-        val tabsFrameLayout = TabsFrameLayout.createTabsView(context, isIncognito(), this)
-
-        tabsView = tabsFrameLayout
         bookmarksView = bookmarksFrameLayout
 
-        val tabDrawer = getTabDrawer()
-        tabDrawer.removeAllViews()
-        tabDrawer.addView(tabsFrameLayout)
+//        val tabsFrameLayout = TabsFrameLayout.createTabsView(context, isIncognito(), this)
+//        tabsView = tabsFrameLayout
+//        val tabDrawer = getTabDrawer()
+//        tabDrawer.removeAllViews()
+//        tabDrawer.addView(tabsFrameLayout)
 
         val bookmarkDrawer = getBookmarkDrawer()
         bookmarkDrawer.removeAllViews()
