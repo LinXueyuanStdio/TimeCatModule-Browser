@@ -53,7 +53,7 @@ class LightningDownloadListener(context: Context) : DownloadListener {
                     }
                     val message = context.getString(R.string.dialog_download, downloadSize)
                     MaterialDialog(context).show {
-                        prepareShowInService()
+                        prepareShowInService(context)
                         title(text = fileName)
                         message(text = message)
                         positiveButton(R.string.action_download) {

@@ -169,7 +169,7 @@ class PermissionInitializer(
 
     override fun initialize(webView: WebView, headers: Map<String, String>) {
         MaterialDialog(context).show {
-            prepareShowInService()
+            prepareShowInService(context)
             title(R.string.title_warning)
             message(R.string.message_blocked_local)
             cancelable(false)

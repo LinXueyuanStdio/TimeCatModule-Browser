@@ -923,7 +923,7 @@ abstract class BrowserActivity : ThemableBrowserActivity(), BrowserView, UIContr
                     if (UserDao.getCurrentUser() != null) {
                         if (DEF.config().getBoolean(IS_FIRST_COLLECTURL, true)) {
                             MaterialDialog(this).show {
-                                prepareShowInService()
+                                prepareShowInService(context)
                                 message(text = "网址不同于文章，相同网址可多次进行收藏，且不会显示收藏状态。")
                                 positiveButton(text = "知道了") {
                                     DEF.config().save(IS_FIRST_COLLECTURL, false)

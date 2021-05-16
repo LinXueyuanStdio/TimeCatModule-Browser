@@ -67,7 +67,7 @@ object BrowserDialog {
         }
 
         MaterialDialog(context).show {
-            prepareShowInService()
+            prepareShowInService(context)
             cancelable(true)
             customView(view = layout)
             adapter.onItemClickListener = { item ->
@@ -101,7 +101,7 @@ object BrowserDialog {
         }
 
         MaterialDialog(context).show {
-            prepareShowInService()
+            prepareShowInService(context)
             cancelable(true)
             customView(view = layout)
             adapter.onItemClickListener = { item ->
@@ -127,7 +127,7 @@ object BrowserDialog {
             context.getString(message)
         }
         MaterialDialog(context).show {
-            prepareShowInService()
+            prepareShowInService(context)
             cancelable(true)
             title(title)
             message(text = messageValue)
@@ -156,7 +156,7 @@ object BrowserDialog {
         textInputListener: (String) -> Unit
     ) {
         MaterialDialog(context).show {
-            prepareShowInService()
+            prepareShowInService(context)
             title(title)
             positiveButton(action)
             input(hint = context.getString(hint), prefill = currentText) { _, text->

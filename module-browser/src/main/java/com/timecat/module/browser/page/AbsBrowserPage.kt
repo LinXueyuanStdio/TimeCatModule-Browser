@@ -81,6 +81,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.palette.graphics.Palette
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.customview.customView
@@ -99,10 +100,7 @@ import com.timecat.data.room.RoomClient
 import com.timecat.data.room.record.RoomRecord
 import com.timecat.element.alert.ToastUtil
 import com.timecat.identity.data.block.BLOCK_APP_WebApp
-import com.timecat.layout.ui.layout.layout_gravity
-import com.timecat.layout.ui.layout.margin_end
-import com.timecat.layout.ui.layout.margin_start
-import com.timecat.layout.ui.layout.margin_top
+import com.timecat.layout.ui.layout.*
 import com.timecat.layout.ui.utils.ScreenUtil
 import com.timecat.module.browser.KeyEventView
 import com.timecat.module.browser.prepareShowInService
@@ -233,6 +231,7 @@ abstract class AbsBrowserPage(
 
     protected var presenter: BrowserPresenter? = null
     private var tabsView: TabsView? = null
+    private lateinit var tabsFrameLayout: TabsFrameLayout
     private var bookmarksView: BookmarksView? = null
 
     // Menu
@@ -281,7 +280,7 @@ abstract class AbsBrowserPage(
 
         val iconColor = Attr.getIconColor(context)
         val menu = actionBar.createMenu()
-        val tabsFrameLayout = TabsFrameLayout.createTabsView(context, isIncognito(), this).apply {
+        tabsFrameLayout = TabsFrameLayout.createTabsView(context, isIncognito(), this).apply {
             bindSearch(actionBar)
             listener = object : ActionBarMenuItem.ActionBarMenuItemSearchListener() {
                 override fun onSearchExpand() {
@@ -300,9 +299,11 @@ abstract class AbsBrowserPage(
         tabsView = tabsFrameLayout
         actionBar.addView(tabsFrameLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.BOTTOM))
         tabsFrameLayout.apply {
-            margin_start = 48
-            margin_end = 96
-            margin_top = ScreenUtil.getStatusBarHeight(context)
+            (layoutParams as? ViewGroup.MarginLayoutParams)?.apply {
+                topMargin = ScreenUtil.getStatusBarHeight(context)
+                leftMargin = 48.dp
+                rightMargin = 96.dp
+            }
         }
         progress_view = LayoutInflater.from(context).inflate(R.layout.browser_progress_view, null) as AnimatedProgressBar
         actionBar.addView(progress_view, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 4, Gravity.BOTTOM))
@@ -369,10 +370,11 @@ abstract class AbsBrowserPage(
                     }
                     moreItemId -> {
                         MaterialDialog(context, BottomSheet()).show {
+                            prepareShowInService(context)
                             val view = MoreDialogView(context)
                             val currentView = tabsManager.currentTab
                             val currentUrl = currentView?.url
-                            view.listener = object :MoreDialogView.Listener{
+                            view.listener = object : MoreDialogView.Listener {
                                 override fun onToggleBookmark(check: Boolean) {
                                     snackbar("onToggleBookmark")
                                 }
@@ -386,7 +388,7 @@ abstract class AbsBrowserPage(
                                 }
 
                                 override fun onSetting() {
-                                    snackbar("onSetting")
+                                    context().startActivity(Intent(context(), SettingsActivity::class.java))
                                 }
 
                                 override fun onNewTab() {
@@ -410,7 +412,10 @@ abstract class AbsBrowserPage(
                                 }
 
                                 override fun onCopyLink() {
-                                    snackbar("onCopyLink")
+                                    if (currentUrl != null && !UrlUtils.isSpecialUrl(currentUrl)) {
+                                        clipboardManager.setPrimaryClip(ClipData.newPlainText("label", currentUrl))
+                                        showSnackbar(R.string.message_link_copied)
+                                    }
                                 }
 
                                 override fun onShare() {
@@ -432,10 +437,12 @@ abstract class AbsBrowserPage(
 
     lateinit var v: View
 
+    private lateinit var progress_view: AnimatedProgressBar
+
     private lateinit var coordinator_layout: CoordinatorLayout
     private lateinit var drawer_layout: DrawerLayout
     private lateinit var ui_layout: KeyEventView
-    private lateinit var progress_view: AnimatedProgressBar
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var content_frame: FrameLayout
     private lateinit var search_bar: RelativeLayout
     private lateinit var search_query: TextView
@@ -454,6 +461,24 @@ abstract class AbsBrowserPage(
         bindView(v)
         lazyInit(context)
         return v
+    }
+
+    @LayoutRes
+    protected fun layout(): Int = R.layout.browser_page_main
+
+    protected open fun bindView(view: View) {
+        coordinator_layout = view.findViewById(R.id.coordinator_layout)
+        drawer_layout = view.findViewById(R.id.drawer_layout)
+        ui_layout = view.findViewById(R.id.ui_layout)
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
+        content_frame = view.findViewById(R.id.content_frame)
+        search_bar = view.findViewById(R.id.search_bar)
+        search_query = view.findViewById(R.id.search_query)
+        button_back = view.findViewById(R.id.button_back)
+        button_next = view.findViewById(R.id.button_next)
+        button_quit = view.findViewById(R.id.button_quit)
+        left_drawer = view.findViewById(R.id.left_drawer)
+        right_drawer = view.findViewById(R.id.right_drawer)
     }
 
     fun lazyInit(context: Context) {
@@ -482,33 +507,7 @@ abstract class AbsBrowserPage(
             logger
         )
 
-        initialize(context)
-    }
-
-    @LayoutRes
-    protected fun layout(): Int = R.layout.browser_page_main
-
-    protected open fun bindView(view: View) {
-        coordinator_layout = view.findViewById(R.id.coordinator_layout)
-        drawer_layout = view.findViewById(R.id.drawer_layout)
-        ui_layout = view.findViewById(R.id.ui_layout)
-        content_frame = view.findViewById(R.id.content_frame)
-        search_bar = view.findViewById(R.id.search_bar)
-        search_query = view.findViewById(R.id.search_query)
-        button_back = view.findViewById(R.id.button_back)
-        button_next = view.findViewById(R.id.button_next)
-        button_quit = view.findViewById(R.id.button_quit)
-        left_drawer = view.findViewById(R.id.left_drawer)
-        right_drawer = view.findViewById(R.id.right_drawer)
-    }
-
-    private fun initialize(context: Context) {
         registerKeyEvent()
-//        toolbar.inflateMenu(menu())
-//        onCreateOptionsMenu(toolbar.menu)
-//        toolbar.setOnMenuItemClickListener(this)
-
-        //TODO make sure dark theme flag gets set correctly
         isDarkTheme = userPreferences.useTheme != 0 || isIncognito()
         iconColor = ThemeUtils.getIconThemeColor(context, isDarkTheme)
         disabledIconColor = if (isDarkTheme) {
@@ -517,6 +516,10 @@ abstract class AbsBrowserPage(
             ContextCompat.getColor(context, R.color.icon_light_theme_disabled)
         }
         swapBookmarksAndTabs = userPreferences.bookmarksAndTabsSwapped
+
+        swipeRefreshLayout.setOnRefreshListener {
+            tabsManager.currentTab?.reload()
+        }
 
         // Drawer stutters otherwise
         left_drawer.setLayerType(View.LAYER_TYPE_NONE, null)
@@ -873,8 +876,6 @@ abstract class AbsBrowserPage(
     }
 
     public fun onWindowVisibleToUserAfterResume() {
-        actionBar.translationY = 0f
-        setWebViewTranslation(actionBar.height.toFloat())
     }
 
     public fun openUrl(mUrl: String) {
@@ -932,11 +933,9 @@ abstract class AbsBrowserPage(
     }
 
     private fun putToolbarInRoot() {
-        setWebViewTranslation(0f)
     }
 
     private fun overlayToolbarOnWebView() {
-        setWebViewTranslation(actionBar.height.toFloat())
     }
 
     private fun setWebViewTranslation(translation: Float) =
@@ -1066,11 +1065,6 @@ abstract class AbsBrowserPage(
         currentTabView.removeFromParent()
 
         content_frame.addView(view, 0, MATCH_PARENT)
-        if (isFullScreen) {
-            view.translationY = actionBar.height + actionBar.translationY
-        } else {
-            view.translationY = 0f
-        }
 
         view.requestFocus()
 
@@ -1095,7 +1089,7 @@ abstract class AbsBrowserPage(
 
     override fun showBlockedLocalFileDialog(onPositiveClick: () -> Unit) {
         MaterialDialog(context()).show {
-            prepareShowInService()
+            prepareShowInService(context())
             title(R.string.title_warning)
             message(R.string.message_blocked_local)
             negativeButton(android.R.string.cancel)
@@ -1110,9 +1104,17 @@ abstract class AbsBrowserPage(
     }
 
     override fun tabClicked(position: Int) {
+        LogUtil.se("pos=${position}, cur=${tabsManager.indexOfCurrentTab()}")
         if (tabsManager.indexOfCurrentTab() == position) {
-            actionBar.openSearchField(tabsManager.currentTab?.url, true)
-        } else{
+            val toggle = !actionBar.isSearchFieldVisible
+            val text = tabsManager.currentTab?.url ?: ""
+            val animated = true
+            if (toggle) {
+                actionBar.onSearchFieldVisibilityChanged(tabsFrameLayout.toggleSearch(true) == true)
+            }
+            tabsFrameLayout.setSearchFieldText(text, animated)
+            tabsFrameLayout.searchField.setSelection(text.length)
+        } else {
             showTab(position)
         }
     }
@@ -1204,8 +1206,6 @@ abstract class AbsBrowserPage(
 
         if (isFullScreen) {
             showActionBar()
-            actionBar.translationY = 0f
-            setWebViewTranslation(actionBar.height.toFloat())
         }
     }
 
@@ -1359,7 +1359,7 @@ abstract class AbsBrowserPage(
                 color
             }
 
-                v.setBackground(ColorDrawable(Color.BLACK))
+            v.setBackground(ColorDrawable(Color.BLACK))
 
             val startSearchColor = getSearchBarColor(currentUiColor, defaultColor)
             val finalSearchColor = getSearchBarColor(finalColor, defaultColor)
@@ -1911,6 +1911,7 @@ abstract class AbsBrowserPage(
             iconDrawable = if (isLoading) deleteIconDrawable else refreshIconDrawable
             searchView?.setCompoundDrawablesWithIntrinsicBounds(sslDrawable, null, iconDrawable, null)
         }
+        swipeRefreshLayout.isRefreshing = isLoading
     }
 
     /**
@@ -2069,7 +2070,7 @@ abstract class AbsBrowserPage(
                     if (UserDao.getCurrentUser() != null) {
                         if (DEF.config().getBoolean(IS_FIRST_COLLECTURL, true)) {
                             MaterialDialog(context()).show {
-                                prepareShowInService()
+                                prepareShowInService(context())
                                 message(text = "网址不同于文章，相同网址可多次进行收藏，且不会显示收藏状态。")
                                 positiveButton(text = "知道了") {
                                     DEF.config().save(IS_FIRST_COLLECTURL, false)
@@ -2094,8 +2095,5 @@ abstract class AbsBrowserPage(
 
     init {
         injector.inject(this)
-        LogUtil.se("inject")
-        LogUtil.se("${proxyUtils == null}")
-
     }
 }

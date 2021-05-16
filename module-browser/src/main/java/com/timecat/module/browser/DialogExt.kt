@@ -15,14 +15,15 @@ import com.afollestad.materialdialogs.MaterialDialog
  * @description null
  * @usage null
  */
-fun MaterialDialog.prepareShowInService() {
+fun MaterialDialog.prepareShowInService(context: Context) {
+    if (context is Activity) return
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
     }
 }
 fun createInformativeDialog(activity: Activity, @StringRes title: Int, @StringRes message: Int) {
     MaterialDialog(activity).show {
-        prepareShowInService()
+        prepareShowInService(activity)
         title(title)
         message(message)
         cancelable(true)
@@ -32,7 +33,7 @@ fun createInformativeDialog(activity: Activity, @StringRes title: Int, @StringRe
 
 fun createInformativeDialog(context: Context, title: Int, msg: String, iconRes: Int) {
     MaterialDialog(context).show {
-        prepareShowInService()
+        prepareShowInService(context)
         title(title)
         message(text=msg)
         icon(iconRes)

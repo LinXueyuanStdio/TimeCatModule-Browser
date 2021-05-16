@@ -4,6 +4,7 @@ import acr.browser.lightning.R
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
+import android.view.Gravity
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -77,6 +78,8 @@ class MoreDialogView @JvmOverloads constructor(
 
             text = "点击登录"
             background = selectableItemBackground(context)
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
+            text_size = 16
             setShakelessClickListener {
                 if (user == null) {
                     listener?.onLogin()

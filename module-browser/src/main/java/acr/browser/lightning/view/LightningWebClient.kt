@@ -168,7 +168,7 @@ class LightningWebClient(
         realmLabel.text = context.getString(R.string.label_realm, realm)
 
         MaterialDialog(context).show {
-            prepareShowInService()
+            prepareShowInService(context)
             customView(view = dialogView)
             title(R.string.title_sign_in)
             cancelable(true)
@@ -218,7 +218,7 @@ class LightningWebClient(
         val view = LayoutInflater.from(context).inflate(R.layout.browser_dialog_ssl_warning, null)
         val dontAskAgain = view.findViewById<CheckBox>(R.id.checkBoxDontAskAgain)
         MaterialDialog(context).show {
-            prepareShowInService()
+            prepareShowInService(context)
             title(R.string.title_warning)
             message(text = alertMessage)
             cancelable(true)
@@ -244,7 +244,7 @@ class LightningWebClient(
 
     override fun onFormResubmission(view: WebView, dontResend: Message, resend: Message) {
         MaterialDialog(context).show {
-            prepareShowInService()
+            prepareShowInService(context)
             title(R.string.title_form_resubmission)
             message(R.string.message_form_resubmission)
             negativeButton(R.string.action_no) { dontResend.sendToTarget() }

@@ -150,7 +150,7 @@ class LightningChromeClient(
                 override fun onGranted() {
                     val remember = true
                     MaterialDialog(context).show {
-                        prepareShowInService()
+                        prepareShowInService(context)
                         title(R.string.location)
                         val org = if (origin.length > 50) {
                             "${origin.subSequence(0, 50)}..."

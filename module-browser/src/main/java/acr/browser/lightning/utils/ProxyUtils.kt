@@ -103,7 +103,7 @@ class ProxyUtils @Inject constructor() {
                 sI2PProxyInitialized = true
                 if (sI2PHelperBound && !mI2PHelper!!.isI2PAndroidRunning) {
                     MaterialDialog(context).show {
-                        prepareShowInService()
+                        prepareShowInService(context)
                         title(R.string.start_i2p_android)
                         message(R.string.would_you_like_to_start_i2p_android)
                         positiveButton(R.string.yes) {
@@ -170,7 +170,7 @@ class ProxyUtils @Inject constructor() {
                 sI2PHelperBound = true
                 if (sI2PProxyInitialized && !mI2PHelper!!.isI2PAndroidRunning) {
                     MaterialDialog(context).show {
-                        prepareShowInService()
+                        prepareShowInService(context)
                         title(R.string.start_i2p_android)
                         message(R.string.would_you_like_to_start_i2p_android)
                         positiveButton(R.string.yes) {
@@ -204,7 +204,7 @@ class ProxyUtils @Inject constructor() {
                     if (!ih.isI2PAndroidInstalled) {
                         choice = NO_PROXY
                         MaterialDialog(context).show {
-                            prepareShowInService()
+                            prepareShowInService(context)
                             title(R.string.start_i2p_android)
                             message(R.string.you_must_have_i2p_android)
                             positiveButton(R.string.yes) {

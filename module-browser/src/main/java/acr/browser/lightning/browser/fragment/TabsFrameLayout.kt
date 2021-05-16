@@ -9,7 +9,6 @@ import acr.browser.lightning.di.injector
 import acr.browser.lightning.extensions.desaturate
 import acr.browser.lightning.extensions.drawTrapezoid
 import acr.browser.lightning.preference.UserPreferences
-import acr.browser.lightning.utils.DrawableUtils
 import acr.browser.lightning.utils.ThemeUtils
 import acr.browser.lightning.utils.Utils
 import acr.browser.lightning.view.LightningView
@@ -31,9 +30,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.annotation.IdRes
 import androidx.appcompat.widget.AppCompatImageView
-import androidx.core.widget.TextViewCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -43,7 +40,9 @@ import com.same.lib.core.ActionBarMenuItem
 import com.same.lib.drawable.CloseProgressDrawable2
 import com.same.lib.helper.LayoutHelper
 import com.same.lib.util.*
+import com.timecat.component.commonsdk.utils.override.LogUtil
 import com.timecat.component.identity.Attr
+import com.timecat.layout.ui.layout.textStyle
 import java.util.*
 import javax.inject.Inject
 
@@ -77,17 +76,15 @@ class TabsFrameLayout @JvmOverloads constructor(
         darkTheme = userPreferences.useTheme != 0 || isIncognito
         colorMode = userPreferences.colorModeEnabled
         colorMode = colorMode and !darkTheme
-
         iconColor = ThemeUtils.getIconThemeColor(context, darkTheme)
-//        val inflater = LayoutInflater.from(context)
-//        inflater.inflate(R.layout.browser_tab_strip, this, true)
-//        findViewById<ImageView>(R.id.new_tab_button).apply {
-//            setColorFilter(context.color(R.color.icon_dark_theme))
-//            setOnClickListener(this@TabsFrameLayout)
-//            setOnLongClickListener(this@TabsFrameLayout)
-//        }
-        tabsAdapter = LightningViewAdapter()
+
         tabs_list = RecyclerView(context).apply {
+            overScrollMode = OVER_SCROLL_NEVER
+            isHorizontalScrollBarEnabled = false
+        }
+        addView(tabs_list, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT.toFloat()))
+        tabsAdapter = LightningViewAdapter()
+        tabs_list.apply {
             val layoutManager = LinearLayoutManager(context, RecyclerView.HORIZONTAL, false)
             val animator = HorizontalItemAnimator().apply {
                 supportsChangeAnimations = false
@@ -101,10 +98,7 @@ class TabsFrameLayout @JvmOverloads constructor(
             this.layoutManager = layoutManager
             adapter = tabsAdapter
             setHasFixedSize(true)
-            overScrollMode = OVER_SCROLL_NEVER
-            isHorizontalScrollBarEnabled = false
         }
-        addView(tabs_list, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL))
     }
 
     override fun onDetachedFromWindow() {
@@ -114,17 +108,7 @@ class TabsFrameLayout @JvmOverloads constructor(
 
     private fun getTabsManager(): TabsManager = uiController.getTabModel()
 
-    private fun setupFrameLayoutButton(root: View, @IdRes buttonId: Int,
-                                       @IdRes imageId: Int) {
-        val frameButton = root.findViewById<View>(buttonId)
-        val buttonImage = root.findViewById<ImageView>(imageId)
-        frameButton.setOnClickListener(this)
-        frameButton.setOnLongClickListener(this)
-        buttonImage.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
-    }
-
     override fun onResume() {
-        // Force adapter refresh
         tabsAdapter?.notifyDataSetChanged()
     }
 
@@ -178,7 +162,7 @@ class TabsFrameLayout @JvmOverloads constructor(
 
     private inner class LightningViewAdapter : RecyclerView.Adapter<LightningViewAdapter.LightningViewHolder>() {
 
-        private val layoutResourceId: Int = R.layout.browser_tab_list_item_horizontal
+        private val layoutResourceId: Int = R.layout.browser_tab_list_item_horizontal_chip
         private val backgroundTabDrawable: Drawable?
         private val foregroundTabBitmap: Bitmap?
         private var tabList: List<TabViewState> = ArrayList()
@@ -225,7 +209,7 @@ class TabsFrameLayout @JvmOverloads constructor(
         }
 
         override fun onCreateViewHolder(viewGroup: ViewGroup, i: Int): LightningViewHolder {
-            val inflater = LayoutInflater.from(viewGroup.context)
+            val inflater = LayoutInflater.from(context)
             val view = inflater.inflate(layoutResourceId, viewGroup, false)
             return LightningViewHolder(view)
         }
@@ -239,7 +223,7 @@ class TabsFrameLayout @JvmOverloads constructor(
             updateViewHolderTitle(holder, web.title)
             updateViewHolderAppearance(holder, web.favicon, web.isForegroundTab)
             updateViewHolderFavicon(holder, web.favicon, web.isForegroundTab)
-//            updateViewHolderBackground(holder, web.isForegroundTab)
+            updateViewHolderBackground(holder, web.isForegroundTab)
         }
 
         private fun updateViewHolderTitle(viewHolder: LightningViewHolder, title: String) {
@@ -259,22 +243,25 @@ class TabsFrameLayout @JvmOverloads constructor(
         }
 
         private fun updateViewHolderBackground(viewHolder: LightningViewHolder, isForeground: Boolean) {
+            viewHolder.chip.isCloseIconVisible = isForeground
         }
 
         private fun updateViewHolderAppearance(viewHolder: LightningViewHolder, favicon: Bitmap, isForeground: Boolean) {
             if (isForeground) {
+                viewHolder.chip.textStyle = Typeface.BOLD
                 val foregroundDrawable = BitmapDrawable(resources, foregroundTabBitmap)
                 if (!isIncognito && colorMode) {
                     foregroundDrawable.setColorFilter(uiController.getUiColor(), PorterDuff.Mode.SRC_IN)
                 }
-                TextViewCompat.setTextAppearance(viewHolder.chip, R.style.boldText)
-                DrawableUtils.setBackground(viewHolder.chip, foregroundDrawable)
+//                TextViewCompat.setTextAppearance(viewHolder.chip, R.style.boldText)
+//                DrawableUtils.setBackground(viewHolder.chip, foregroundDrawable)
                 if (!isIncognito && colorMode) {
                     uiController.changeToolbarBackground(favicon, foregroundDrawable)
                 }
             } else {
-                TextViewCompat.setTextAppearance(viewHolder.chip, R.style.normalText)
-                DrawableUtils.setBackground(viewHolder.chip, backgroundTabDrawable)
+                viewHolder.chip.textStyle = Typeface.NORMAL
+//                TextViewCompat.setTextAppearance(viewHolder.chip, R.style.normalText)
+//                DrawableUtils.setBackground(viewHolder.chip, backgroundTabDrawable)
             }
         }
 
@@ -291,8 +278,11 @@ class TabsFrameLayout @JvmOverloads constructor(
                 }
                 chip.setOnClickListener {
                     uiController.tabClicked(adapterPosition)
+                    val curActiveIdx = getTabsManager().indexOfCurrentTab()
+                    LogUtil.se("chip on click, pos=${adapterPosition}, curActive=${curActiveIdx}")
                 }
                 chip.setOnLongClickListener {
+                    LogUtil.se("chip on long click, pos=${adapterPosition}")
                     uiController.showCloseDialog(adapterPosition)
                     true
                 }
@@ -561,6 +551,18 @@ class TabsFrameLayout @JvmOverloads constructor(
         parentActionBar.onSearchFieldVisibilityChanged(toggleSearch(openKeyboard))
     }
 
+    fun setSearchFieldHint(hint: CharSequence?) {
+        searchField.hint = hint
+        contentDescription = hint
+    }
+
+    fun setSearchFieldText(text: CharSequence, animated: Boolean) {
+        animateClear = animated
+        searchField.setText(text)
+        if (!TextUtils.isEmpty(text)) {
+            searchField.setSelection(text.length)
+        }
+    }
     //endregion
     companion object {
 
