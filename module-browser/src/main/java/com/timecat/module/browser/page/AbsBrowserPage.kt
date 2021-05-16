@@ -643,6 +643,7 @@ abstract class AbsBrowserPage(
 
             override fun search() {
                 // Highlight search field
+                onSearchMode()
                 searchView?.requestFocus()
                 searchView?.selectAll()
             }
@@ -1109,17 +1110,21 @@ abstract class AbsBrowserPage(
     override fun tabClicked(position: Int) {
         LogUtil.se("pos=${position}, cur=${tabsManager.indexOfCurrentTab()}")
         if (tabsManager.indexOfCurrentTab() == position) {
-            val toggle = !actionBar.isSearchFieldVisible
-            val text = tabsManager.currentTab?.url ?: ""
-            val animated = true
-            if (toggle) {
-                tabsFrameLayout.openSearch(true)
-            }
-            tabsFrameLayout.setSearchFieldText(text, animated)
-            tabsFrameLayout.searchField.setSelection(text.length)
+            onSearchMode()
         } else {
             showTab(position)
         }
+    }
+
+    fun onSearchMode() {
+        val toggle = !actionBar.isSearchFieldVisible
+        val text = tabsManager.currentTab?.url ?: ""
+        val animated = true
+        if (toggle) {
+            tabsFrameLayout.openSearch(true)
+        }
+        tabsFrameLayout.setSearchFieldText(text, animated)
+        tabsFrameLayout.searchField.setSelection(text.length)
     }
 
     override fun newTabButtonClicked() {

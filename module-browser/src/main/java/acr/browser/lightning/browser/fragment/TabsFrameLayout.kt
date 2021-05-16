@@ -29,6 +29,7 @@ import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.recyclerview.widget.DiffUtil
@@ -277,9 +278,9 @@ class TabsFrameLayout @JvmOverloads constructor(
                     uiController.tabCloseClicked(adapterPosition)
                 }
                 chip.setOnClickListener {
-                    uiController.tabClicked(adapterPosition)
                     val curActiveIdx = getTabsManager().indexOfCurrentTab()
                     LogUtil.se("chip on click, pos=${adapterPosition}, curActive=${curActiveIdx}")
+                    uiController.tabClicked(adapterPosition)
                 }
                 chip.setOnLongClickListener {
                     LogUtil.se("chip on long click, pos=${adapterPosition}")
@@ -371,7 +372,10 @@ class TabsFrameLayout @JvmOverloads constructor(
                 searchField.layout(x, searchField.getTop(), x + searchField.getMeasuredWidth(), searchField.getBottom())
             }
         }
-        parentActionBar.addView(searchContainer, 0, LayoutHelper.createLinear(0, LayoutHelper.MATCH_PARENT, 1.0f, 6, 0, 0, 0))
+        val linear = LinearLayout(context).apply {
+            addView(searchContainer, 0, LayoutHelper.createLinear(0, LayoutHelper.MATCH_PARENT, 1.0f, 6, 0, 0, 0))
+        }
+        parentActionBar.addView(linear)
         searchContainer.setVisibility(GONE)
 
         searchFieldCaption = TextView(context)
