@@ -117,6 +117,8 @@ class MoreDialogView @JvmOverloads constructor(
             margin = 10
 
             text = "新标签页"
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
+            text_size = 20
             setShakelessClickListener {
                 listener?.onNewTab()
             }
@@ -137,6 +139,8 @@ class MoreDialogView @JvmOverloads constructor(
             margin = 10
 
             text = "新无痕页"
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
+            text_size = 20
             setShakelessClickListener {
                 listener?.onNewIncognitoTab()
             }

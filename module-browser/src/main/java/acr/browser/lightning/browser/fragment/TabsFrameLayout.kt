@@ -563,6 +563,29 @@ class TabsFrameLayout @JvmOverloads constructor(
             searchField.setSelection(text.length)
         }
     }
+
+    fun clearSearchText() {
+        searchField.setText("")
+    }
+
+    fun setShowSearchProgress(show: Boolean) {
+        if (progressDrawable == null) {
+            return
+        }
+        if (show) {
+            progressDrawable!!.startAnimation()
+        } else {
+            progressDrawable!!.stopAnimation()
+        }
+    }
+    fun setSearchFieldCaption(caption: CharSequence?) {
+        if (TextUtils.isEmpty(caption)) {
+            searchFieldCaption.visibility = GONE
+        } else {
+            searchFieldCaption.visibility = VISIBLE
+            searchFieldCaption.text = caption
+        }
+    }
     //endregion
     companion object {
 

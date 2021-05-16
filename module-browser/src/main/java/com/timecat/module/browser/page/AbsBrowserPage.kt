@@ -284,14 +284,17 @@ abstract class AbsBrowserPage(
             bindSearch(actionBar)
             listener = object : ActionBarMenuItem.ActionBarMenuItemSearchListener() {
                 override fun onSearchExpand() {
+                    LogUtil.se("onSearchExpand")
                 }
 
                 override fun onSearchCollapse() {
+                    LogUtil.se("onSearchCollapse")
                     val currentTab = tabsManager.currentTab ?: return
                     currentTab.requestFocus()
                 }
 
                 override fun onTextChanged(editText: EditText) {
+                    LogUtil.se("onTextChanged ${editText.text}")
                 }
             }
             id = R.id.toolbar_layout
@@ -1110,7 +1113,7 @@ abstract class AbsBrowserPage(
             val text = tabsManager.currentTab?.url ?: ""
             val animated = true
             if (toggle) {
-                actionBar.onSearchFieldVisibilityChanged(tabsFrameLayout.toggleSearch(true) == true)
+                tabsFrameLayout.openSearch(true)
             }
             tabsFrameLayout.setSearchFieldText(text, animated)
             tabsFrameLayout.searchField.setSelection(text.length)
