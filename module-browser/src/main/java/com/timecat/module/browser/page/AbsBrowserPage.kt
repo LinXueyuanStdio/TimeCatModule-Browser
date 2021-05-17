@@ -26,7 +26,6 @@ import acr.browser.lightning.notifications.IncognitoNotification
 import acr.browser.lightning.reading.activity.ReadingActivity
 import acr.browser.lightning.search.SearchEngineProvider
 import acr.browser.lightning.search.SuggestionsAdapter
-import acr.browser.lightning.settings.SettingsActivity
 import acr.browser.lightning.ssl.SSLState
 import acr.browser.lightning.utils.*
 import acr.browser.lightning.utils.DrawableUtils
@@ -280,7 +279,7 @@ abstract class AbsBrowserPage(
         menuDrawable.setRotateToBack(true)
         actionBar.setBackButtonDrawable(menuDrawable)
 
-        val iconColor = Attr.getIconColor(context)
+        val iconColor = if (isIncognito()) Attr.getIconColorReverse(context) else Attr.getIconColor(context)
         val menu = actionBar.createMenu()
         tabsFrameLayout = TabsFrameLayout.createTabsView(context, isIncognito(), this).apply {
             bindSearch(actionBar)
@@ -350,11 +349,7 @@ abstract class AbsBrowserPage(
             initializeSearchSuggestions(context, this)
         }
 
-        searchBackground = tabsFrameLayout.searchContainer.apply {
-            // initialize search background color
-            setBackgroundColor(getSearchBarColor(primaryColor, primaryColor))
-//            background.setColorFilter(, PorterDuff.Mode.SRC_IN)
-        }
+        searchBackground = tabsFrameLayout.searchContainer
 
         val addItemId = 1
         val moreItemId = 2
@@ -412,7 +407,7 @@ abstract class AbsBrowserPage(
                 }
 
                 override fun onSetting() {
-                    context().startActivity(Intent(context(), SettingsActivity::class.java))
+                    NAV.go(RouterHub.ARTIFACT_SettingActivity)
                 }
 
                 override fun onNewTab() {
@@ -1477,12 +1472,7 @@ abstract class AbsBrowserPage(
                     tabBackground?.setColorFilter(animatedColor, PorterDuff.Mode.SRC_IN)
                     currentUiColor = animatedColor
                     actionBar.setBackgroundColor(animatedColor)
-                    searchBackground?.background?.setColorFilter(
-                        DrawableUtils.mixColor(
-                            interpolatedTime,
-                            startSearchColor, finalSearchColor
-                        ), PorterDuff.Mode.SRC_IN
-                    )
+                    searchBackground?.setBackgroundColor(animatedColor)
                 }
             }
             animation.duration = 300
@@ -1492,9 +1482,9 @@ abstract class AbsBrowserPage(
 
     private fun getSearchBarColor(requestedColor: Int, defaultColor: Int): Int =
         if (requestedColor == defaultColor) {
-            if (isDarkTheme) DrawableUtils.mixColor(0.25f, defaultColor, Color.TRANSPARENT) else Color.TRANSPARENT
+            if (isDarkTheme) DrawableUtils.mixColor(0.25f, defaultColor, Color.WHITE) else Color.TRANSPARENT
         } else {
-            DrawableUtils.mixColor(0.25f, requestedColor, Color.TRANSPARENT)
+            DrawableUtils.mixColor(0.25f, requestedColor, Color.WHITE)
         }
 
     override fun getUseDarkTheme(): Boolean = isDarkTheme
@@ -2019,6 +2009,9 @@ abstract class AbsBrowserPage(
             searchView?.setCompoundDrawablesWithIntrinsicBounds(sslDrawable, null, iconDrawable, null)
         }
         swipeRefreshLayout.isRefreshing = isLoading
+        if (!isLoading) {
+            closeSearchField()
+        }
     }
 
     /**

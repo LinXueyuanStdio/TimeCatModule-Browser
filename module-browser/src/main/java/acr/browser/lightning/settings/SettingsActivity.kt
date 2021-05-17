@@ -3,9 +3,11 @@ package acr.browser.lightning.settings
 import acr.browser.lightning.R
 import android.content.Intent
 import android.view.ViewGroup
+import com.timecat.identity.readonly.RouterHub
 import com.timecat.layout.ui.business.form.Next
 import com.timecat.layout.ui.business.setting.NextItem
 import com.timecat.middle.setting.BaseSettingActivity
+import com.xiaojinzi.component.anno.RouterAnno
 
 /**
  * @author 林学渊
@@ -14,6 +16,7 @@ import com.timecat.middle.setting.BaseSettingActivity
  * @description null
  * @usage null
  */
+@RouterAnno(hostAndPath = RouterHub.ARTIFACT_SettingActivity)
 class SettingsActivity : BaseSettingActivity() {
     override fun title(): String = "浏览器设置"
     override fun addSettingItems(container: ViewGroup) {

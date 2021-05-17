@@ -31,12 +31,12 @@ class SquareSwitchText @JvmOverloads constructor(
 
     init {
         orientation = VERTICAL
-        layout_width = 48
+        layout_width = wrap_content
         layout_height = wrap_content
         padding = 4
         margin = 4
         switchCompat = SwitchCompat(context).apply {
-            layout_width = 36
+            layout_width = wrap_content
             layout_height = 36
             margin = 4
             layout_gravity = gravity_center

@@ -62,14 +62,14 @@ class MoreDialogView @JvmOverloads constructor(
     var newTabView: TextView
     var newIncognitoTabView: TextView
 
-    var bookmarkSwitch: SquareSwitchText
-    var bookmarkView: SquareIconText
-    var historyView: SquareIconText
-    var downloadView: SquareIconText
-    var refreshView: SquareIconText
-    var copyLinkView: SquareIconText
-    var shareView: SquareIconText
-    var toolsView: SquareIconText
+    lateinit var bookmarkSwitch: SquareSwitchText
+    lateinit var bookmarkView: SquareIconText
+    lateinit var historyView: SquareIconText
+    lateinit var downloadView: SquareIconText
+    lateinit var refreshView: SquareIconText
+    lateinit var copyLinkView: SquareIconText
+    lateinit var shareView: SquareIconText
+    lateinit var toolsView: SquareIconText
 
     init {
         val iconColor = ColorStateList.valueOf(Attr.getIconColor(context))
@@ -165,132 +165,154 @@ class MoreDialogView @JvmOverloads constructor(
             }
         }
 
-        bookmarkSwitch = SquareSwitchText(context).apply {
-            layout_id = "bookmarkSwitch"
-            layout_width = 0
+        LinearLayout {
+            layout_id = "row1"
+            layout_width = match_parent
             layout_height = wrap_content
-            start_toStartOf = parent_id
-            top_toBottomOf = "newTab"
 
-            data = SquareSwitchText.Data(
-                "bookmark",
-                listener?.currentLinkIsInBookmarks() == true,
-                context.getString(R.string.action_add_bookmark)
-            )
-            onCheckChange = {
-                listener?.onToggleBookmark(it)
-            }
-        }.also {
-            addView(it)
-        }
-        bookmarkView = SquareIconTextView(
-            "bookmarkView",
-            "R.drawable.ic_bookmark",
-            R.string.action_bookmarks
-        ) {
-            start_toEndOf = "bookmarkSwitch"
             top_toBottomOf = "newTab"
-            end_toStartOf = "historyView"
-            onClick {
-                listener?.openBookmark()
+            orientation = android.widget.LinearLayout.HORIZONTAL
+            weightSum = 4f
+            bookmarkSwitch = SquareSwitchText(context).apply {
+                layout_id = "bookmarkSwitch"
+//                layout_width = 0
+//                layout_height = wrap_content
+//                start_toStartOf = parent_id
+//                top_toBottomOf = "newTab"
+                layout_width = wrap_content
+                layout_height = wrap_content
+                weight = 1f
+                layout_gravity = gravity_center
+
+                data = SquareSwitchText.Data(
+                    "bookmark",
+                    listener?.currentLinkIsInBookmarks() == true,
+                    context.getString(R.string.action_add_bookmark)
+                )
+                onCheckChange = {
+                    listener?.onToggleBookmark(it)
+                }
+            }.also {
+                addView(it)
+            }
+            bookmarkView = SquareIconTextView(
+                "bookmarkView",
+                "R.drawable.ic_bookmark",
+                R.string.action_bookmarks
+            ) {
+//                start_toEndOf = "bookmarkSwitch"
+//                top_toBottomOf = "newTab"
+//                end_toStartOf = "historyView"
+                onClick {
+                    listener?.openBookmark()
+                }
+            }
+            historyView = SquareIconTextView(
+                "historyView",
+                "R.drawable.ic_history",
+                R.string.action_history
+            ) {
+//                start_toEndOf = "bookmarkView"
+//                top_toBottomOf = "newTab"
+//                end_toStartOf = "downloadView"
+                onClick {
+                    listener?.openHistory()
+                }
+            }
+            downloadView = SquareIconTextView(
+                "downloadView",
+                "R.drawable.ic_download",
+                R.string.action_downloads
+            ) {
+//                end_toEndOf = parent_id
+//                top_toBottomOf = "newTab"
+                onClick {
+                    listener?.openDownload()
+                }
             }
         }
-        historyView = SquareIconTextView(
-            "historyView",
-            "R.drawable.ic_history",
-            R.string.action_history
-        ) {
-            start_toEndOf = "bookmarkView"
-            top_toBottomOf = "newTab"
-            end_toStartOf = "downloadView"
-            onClick {
-                listener?.openHistory()
+        LinearLayout {
+            layout_id = "row2"
+            layout_width = match_parent
+            layout_height = wrap_content
+
+            top_toBottomOf = "row1"
+            orientation = android.widget.LinearLayout.HORIZONTAL
+            weightSum = 4f
+            refreshView = SquareIconTextView(
+                "refreshView",
+                "R.drawable.ic_action_refresh",
+                R.string.actionbar_webview_refresh
+            ) {
+//                start_toStartOf = parent_id
+//                top_toBottomOf = "bookmarkSwitch"
+                onClick {
+                    listener?.onRefreshCurrentWeb()
+                }
             }
-        }
-        downloadView = SquareIconTextView(
-            "downloadView",
-            "R.drawable.ic_bookmark",
-            R.string.action_downloads
-        ) {
-            end_toEndOf = parent_id
-            top_toBottomOf = "newTab"
-            onClick {
-                listener?.openDownload()
+            copyLinkView = SquareIconTextView(
+                "copyLinkView",
+                "R.drawable.ic_copy",
+                R.string.action_copy
+            ) {
+//                start_toEndOf = "bookmarkSwitch"
+//                top_toBottomOf = "bookmarkSwitch"
+//                end_toStartOf = "shareView"
+                onClick {
+                    listener?.onCopyLink()
+                }
             }
-        }
-        refreshView = SquareIconTextView(
-            "refreshView",
-            "R.drawable.ic_action_refresh",
-            R.string.actionbar_webview_refresh
-        ) {
-            start_toStartOf = parent_id
-            top_toBottomOf = "bookmarkSwitch"
-            onClick {
-                listener?.onRefreshCurrentWeb()
+            shareView = SquareIconTextView(
+                "shareView",
+                "R.drawable.ic_share",
+                R.string.action_share
+            ) {
+//                start_toEndOf = "copyLinkView"
+//                top_toBottomOf = "bookmarkSwitch"
+//                end_toStartOf = "toolsView"
+                onClick {
+                    listener?.onShare()
+                }
             }
-        }
-        copyLinkView = SquareIconTextView(
-            "copyLinkView",
-            "R.drawable.ic_copy",
-            R.string.action_copy
-        ) {
-            start_toEndOf = "bookmarkSwitch"
-            top_toBottomOf = "bookmarkSwitch"
-            end_toStartOf = "shareView"
-            onClick {
-                listener?.onCopyLink()
-            }
-        }
-        shareView = SquareIconTextView(
-            "shareView",
-            "R.drawable.ic_share",
-            R.string.action_share
-        ) {
-            start_toEndOf = "copyLinkView"
-            top_toBottomOf = "bookmarkSwitch"
-            end_toStartOf = "toolsView"
-            onClick {
-                listener?.onShare()
-            }
-        }
-        toolsView = SquareIconTextView(
-            "toolsView",
-            "R.drawable.ic_bookmark",
-            R.string.dialog_tools_title
-        ) {
-            end_toEndOf = parent_id
-            top_toBottomOf = "bookmarkSwitch"
-            onClick {
-                PopupMenu(context, it).apply {
-                    menu.add(R.string.actionbar_webview_collect).setIcon(R.drawable.ic_star).setOnMenuItemClickListener {
-                        listener?.collect()
-                        true
+            toolsView = SquareIconTextView(
+                "toolsView",
+                "R.drawable.ic_page_tools",
+                R.string.dialog_tools_title
+            ) {
+//                end_toEndOf = parent_id
+//                top_toBottomOf = "bookmarkSwitch"
+                onClick {
+                    PopupMenu(context, it).apply {
+                        menu.add(R.string.actionbar_webview_collect).setIcon(R.drawable.ic_star).setOnMenuItemClickListener {
+                            listener?.collect()
+                            true
+                        }
+                        menu.add(R.string.action_find).setIcon(R.drawable.ic_search).setOnMenuItemClickListener {
+                            listener?.findInPage()
+                            true
+                        }
+                        menu.add(R.string.action_add_to_homescreen).setIcon(R.drawable.ic_home).setOnMenuItemClickListener {
+                            listener?.addToHome()
+                            true
+                        }
+                        menu.add(R.string.reading_mode).setIcon(R.drawable.ic_action_reading).setOnMenuItemClickListener {
+                            listener?.readingMode()
+                            true
+                        }
+                        menu.add(R.string.nav_info).setIcon(R.drawable.ic_info).setOnMenuItemClickListener {
+                            listener?.openProperty()
+                            true
+                        }
+                        menu.add(R.string.action_forward).setIcon(R.drawable.ic_action_forward).setOnMenuItemClickListener {
+                            listener?.forward()
+                            true
+                        }
+                        menu.add(R.string.action_back).setIcon(R.drawable.ic_back).setOnMenuItemClickListener {
+                            listener?.backward()
+                            true
+                        }
+                        show()
                     }
-                    menu.add(R.string.action_find).setIcon(R.drawable.ic_search).setOnMenuItemClickListener {
-                        listener?.findInPage()
-                        true
-                    }
-                    menu.add(R.string.action_add_to_homescreen).setIcon(R.drawable.ic_home).setOnMenuItemClickListener {
-                        listener?.addToHome()
-                        true
-                    }
-                    menu.add(R.string.reading_mode).setIcon(R.drawable.ic_action_reading).setOnMenuItemClickListener {
-                        listener?.readingMode()
-                        true
-                    }
-                    menu.add(R.string.nav_info).setIcon(R.drawable.ic_info).setOnMenuItemClickListener {
-                        listener?.openProperty()
-                        true
-                    }
-                    menu.add(R.string.action_forward).setIcon(R.drawable.ic_action_forward).setOnMenuItemClickListener {
-                        listener?.forward()
-                        true
-                    }
-                    menu.add(R.string.action_back).setIcon(R.drawable.ic_back).setOnMenuItemClickListener {
-                        listener?.backward()
-                        true
-                    }
-                    show()
                 }
             }
         }
@@ -323,8 +345,12 @@ class MoreDialogView @JvmOverloads constructor(
         val imageView = SquareIconText(context)
         return imageView.apply {
             layout_id = id
-            layout_width = 0
+//            layout_width = 0
+//            layout_height = wrap_content
+            layout_width = wrap_content
             layout_height = wrap_content
+            weight = 1f
+            layout_gravity = gravity_center
 
             data = SquareIconText.Data(id, icon, context.getString(nameRes))
         }.apply(init).also { if (autoAdd) addView(it) }
