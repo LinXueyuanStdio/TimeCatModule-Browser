@@ -84,7 +84,6 @@ class MoreDialogView @JvmOverloads constructor(
             start_toStartOf = parent_id
             top_toTopOf = parent_id
             setImageResource(R.drawable.ic_incognito)
-            imageTintList = iconColor
         }
         usernameView = TextView {
             layout_id = "username"
@@ -201,9 +200,9 @@ class MoreDialogView @JvmOverloads constructor(
             "R.drawable.ic_history",
             R.string.action_history
         ) {
-            start_toEndOf = "downloadView"
+            start_toEndOf = "bookmarkView"
             top_toBottomOf = "newTab"
-            end_toStartOf = "bookmarkView"
+            end_toStartOf = "downloadView"
             onClick {
                 listener?.openHistory()
             }
@@ -291,6 +290,7 @@ class MoreDialogView @JvmOverloads constructor(
                         listener?.backward()
                         true
                     }
+                    show()
                 }
             }
         }

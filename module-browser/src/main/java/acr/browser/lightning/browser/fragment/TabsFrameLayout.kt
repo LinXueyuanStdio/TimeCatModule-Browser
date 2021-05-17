@@ -416,7 +416,7 @@ class TabsFrameLayout @JvmOverloads constructor(
         searchField.setHintTextColor(ColorManager.getColor(KeyHub.key_actionBarDefaultSearchPlaceholder))
         searchField.setTextColor(ColorManager.getColor(KeyHub.key_actionBarDefaultSearch))
         searchField.setSingleLine(true)
-        searchField.setBackgroundResource(0)
+        searchField.setBackground(null)
         searchField.setPadding(0, 0, 0, 0)
         val inputType: Int = searchField.getInputType() or EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS
         searchField.setInputType(inputType)

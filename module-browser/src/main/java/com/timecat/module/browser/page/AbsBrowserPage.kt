@@ -104,7 +104,6 @@ import com.timecat.element.alert.ToastUtil
 import com.timecat.identity.data.block.BLOCK_APP_WebApp
 import com.timecat.identity.readonly.RouterHub
 import com.timecat.layout.ui.layout.*
-import com.timecat.layout.ui.utils.ScreenUtil
 import com.timecat.module.browser.KeyEventView
 import com.timecat.module.browser.prepareShowInService
 import io.reactivex.Completable
@@ -375,151 +374,158 @@ abstract class AbsBrowserPage(
                         presenter?.newTab(homePageInitializer, true)
                     }
                     moreItemId -> {
-                        MaterialDialog(context, BottomSheet()).show {
-                            prepareShowInService(context)
-                            val view = MoreDialogView(context)
-                            val currentView = tabsManager.currentTab
-                            val currentUrl = currentView?.url
-                            view.user = UserDao.getCurrentUser()
-                            view.listener = object : MoreDialogView.Listener {
-                                override fun onToggleBookmark(check: Boolean) {
-                                    if (currentUrl != null && !UrlUtils.isSpecialUrl(currentUrl)) {
-                                        if (check) {
-                                            addBookmark(currentView.title, currentUrl)
-                                        } else{
-                                            deleteBookmark(currentView.title, currentUrl)
-                                        }
-                                    }
-                                }
-
-                                override fun onLogin() {
-                                    NAV.go(RouterHub.LOGIN_LoginActivity)
-                                }
-
-                                override fun onClickUser(user: User) {
-                                    NAV.go(RouterHub.USER_UserDetailActivity, "userId", user.uuid)
-                                }
-
-                                override fun onSetting() {
-                                    context().startActivity(Intent(context(), SettingsActivity::class.java))
-                                }
-
-                                override fun onNewTab() {
-                                    presenter?.newTab(homePageInitializer, true)
-                                }
-
-                                override fun onNewIncognitoTab() {
-                                    presentFragment(IncognitoPage())
-                                }
-
-                                override fun openBookmark() {
-                                    this@AbsBrowserPage.openBookmarks()
-                                }
-
-                                override fun openHistory() {
-                                   this@AbsBrowserPage.openHistory()
-                                }
-
-                                override fun openDownload() {
-                                    openDownloads()
-                                }
-
-                                override fun onRefreshCurrentWeb() {
-                                    refreshOrStop()
-                                }
-
-                                override fun onCopyLink() {
-                                    if (currentUrl != null && !UrlUtils.isSpecialUrl(currentUrl)) {
-                                        clipboardManager.setPrimaryClip(ClipData.newPlainText("label", currentUrl))
-                                        showSnackbar(R.string.message_link_copied)
-                                    }
-                                }
-
-                                override fun onShare() {
-                                    IntentUtils(context).shareUrl(currentUrl, currentView?.title)
-                                }
-
-                                override fun openProperty() {
-                                    snackbar("openProperty")
-                                }
-
-                                override fun currentLinkIsInBookmarks(): Boolean {
-                                    if (currentUrl==null) return false
-                                    return bookmarkManager.isBookmark(currentUrl)
-                                        .subscribeOn(databaseScheduler)
-                                        .observeOn(mainScheduler)
-                                        .blockingGet()
-                                }
-
-                                override fun collect() {
-                                    if (currentView != null
-                                        && currentView.url.isNotBlank()
-                                        && !UrlUtils.isSpecialUrl(currentView.url)
-                                    ) {
-                                        if (UserDao.getCurrentUser() != null) {
-                                            if (DEF.config().getBoolean(IS_FIRST_COLLECTURL, true)) {
-                                                MaterialDialog(context()).show {
-                                                    prepareShowInService(context())
-                                                    message(text = "网址不同于文章，相同网址可多次进行收藏，且不会显示收藏状态。")
-                                                    positiveButton(text = "知道了") {
-                                                        DEF.config().save(IS_FIRST_COLLECTURL, false)
-                                                        collectUrl(currentView.title, currentView.url)
-                                                    }
-                                                }
-                                            } else {
-                                                collectUrl(currentView.title, currentView.url)
-                                            }
-                                        } else {
-                                            toast("请先登录")
-                                        }
-                                    } else {
-                                        toast("暂不支持当前页面")
-                                    }
-                                }
-
-                                override fun findInPage() {
-                                    this@AbsBrowserPage.findInPage()
-                                }
-
-                                override fun addToHome() {
-                                    if (currentView != null
-                                        && currentView.url.isNotBlank()
-                                        && !UrlUtils.isSpecialUrl(currentView.url)
-                                    ) {
-                                        HistoryEntry(currentView.url, currentView.title).also {
-                                            Utils.createShortcut(context(), it, currentView.favicon)
-                                            logger.log(TAG, "Creating shortcut: ${it.title} ${it.url}")
-                                        }
-                                    }
-                                }
-
-                                override fun readingMode() {
-                                    if (currentUrl != null) {
-                                        val read = Intent(context(), ReadingActivity::class.java)
-                                        read.putExtra(LOAD_READING_URL, currentUrl)
-                                        context().startActivity(read)
-                                    }
-                                }
-
-                                override fun forward() {
-                                    if (currentView?.canGoForward() == true) {
-                                        currentView.goForward()
-                                    }
-                                }
-
-                                override fun backward() {
-                                    if (currentView?.canGoBack() == true) {
-                                        currentView.goBack()
-                                    }
-                                }
-                            }
-                            customView(view = view)
-                        }
+                        showMoreDialog(context)
                     }
                 }
             }
         })
+        actionBar.setCloseListener {
+            closeSearchField()
+        }
         return actionBar
+    }
+
+    fun showMoreDialog(context: Context) {
+        MaterialDialog(context, BottomSheet()).show {
+            prepareShowInService(context)
+            val view = MoreDialogView(context)
+            val currentView = tabsManager.currentTab
+            val currentUrl = currentView?.url
+            view.user = UserDao.getCurrentUser()
+            view.listener = object : MoreDialogView.Listener {
+                override fun onToggleBookmark(check: Boolean) {
+                    if (currentUrl != null && !UrlUtils.isSpecialUrl(currentUrl)) {
+                        if (check) {
+                            addBookmark(currentView.title, currentUrl)
+                        } else {
+                            deleteBookmark(currentView.title, currentUrl)
+                        }
+                    }
+                }
+
+                override fun onLogin() {
+                    NAV.go(RouterHub.LOGIN_LoginActivity)
+                }
+
+                override fun onClickUser(user: User) {
+                    NAV.go(RouterHub.USER_UserDetailActivity, "userId", user.uuid)
+                }
+
+                override fun onSetting() {
+                    context().startActivity(Intent(context(), SettingsActivity::class.java))
+                }
+
+                override fun onNewTab() {
+                    presenter?.newTab(homePageInitializer, true)
+                }
+
+                override fun onNewIncognitoTab() {
+                    presentFragment(IncognitoPage())
+                }
+
+                override fun openBookmark() {
+                    this@AbsBrowserPage.openBookmarks()
+                }
+
+                override fun openHistory() {
+                    this@AbsBrowserPage.openHistory()
+                }
+
+                override fun openDownload() {
+                    openDownloads()
+                }
+
+                override fun onRefreshCurrentWeb() {
+                    refreshOrStop()
+                }
+
+                override fun onCopyLink() {
+                    if (currentUrl != null && !UrlUtils.isSpecialUrl(currentUrl)) {
+                        clipboardManager.setPrimaryClip(ClipData.newPlainText("label", currentUrl))
+                        showSnackbar(R.string.message_link_copied)
+                    }
+                }
+
+                override fun onShare() {
+                    IntentUtils(context).shareUrl(currentUrl, currentView?.title)
+                }
+
+                override fun openProperty() {
+                    snackbar("openProperty")
+                }
+
+                override fun currentLinkIsInBookmarks(): Boolean {
+                    if (currentUrl == null) return false
+                    return bookmarkManager.isBookmark(currentUrl)
+                        .subscribeOn(databaseScheduler)
+                        .observeOn(mainScheduler)
+                        .blockingGet()
+                }
+
+                override fun collect() {
+                    if (currentView != null
+                        && currentView.url.isNotBlank()
+                        && !UrlUtils.isSpecialUrl(currentView.url)
+                    ) {
+                        if (UserDao.getCurrentUser() != null) {
+                            if (DEF.config().getBoolean(IS_FIRST_COLLECTURL, true)) {
+                                MaterialDialog(context()).show {
+                                    prepareShowInService(context())
+                                    message(text = "网址不同于文章，相同网址可多次进行收藏，且不会显示收藏状态。")
+                                    positiveButton(text = "知道了") {
+                                        DEF.config().save(IS_FIRST_COLLECTURL, false)
+                                        collectUrl(currentView.title, currentView.url)
+                                    }
+                                }
+                            } else {
+                                collectUrl(currentView.title, currentView.url)
+                            }
+                        } else {
+                            toast("请先登录")
+                        }
+                    } else {
+                        toast("暂不支持当前页面")
+                    }
+                }
+
+                override fun findInPage() {
+                    this@AbsBrowserPage.findInPage()
+                }
+
+                override fun addToHome() {
+                    if (currentView != null
+                        && currentView.url.isNotBlank()
+                        && !UrlUtils.isSpecialUrl(currentView.url)
+                    ) {
+                        HistoryEntry(currentView.url, currentView.title).also {
+                            Utils.createShortcut(context(), it, currentView.favicon)
+                            logger.log(TAG, "Creating shortcut: ${it.title} ${it.url}")
+                        }
+                    }
+                }
+
+                override fun readingMode() {
+                    if (currentUrl != null) {
+                        val read = Intent(context(), ReadingActivity::class.java)
+                        read.putExtra(LOAD_READING_URL, currentUrl)
+                        context().startActivity(read)
+                    }
+                }
+
+                override fun forward() {
+                    if (currentView?.canGoForward() == true) {
+                        currentView.goForward()
+                    }
+                }
+
+                override fun backward() {
+                    if (currentView?.canGoBack() == true) {
+                        currentView.goBack()
+                    }
+                }
+            }
+            customView(view = view)
+        }
     }
 
     lateinit var v: View
@@ -1200,6 +1206,15 @@ abstract class AbsBrowserPage(
         }
     }
 
+    fun closeSearchField(closeKeyboard: Boolean = true) {
+        if (tabsFrameLayout.isSearchFieldVisible()) {
+            if (tabsFrameLayout.listener?.canCollapseSearch() == true) {
+                actionBar.onSearchFieldVisibilityChanged(false)
+                tabsFrameLayout.toggleSearch(closeKeyboard)
+            }
+        }
+    }
+
     fun onSearchMode() {
         val toggle = !actionBar.isSearchFieldVisible
         val text = tabsManager.currentTab?.url ?: ""
@@ -1477,9 +1492,9 @@ abstract class AbsBrowserPage(
 
     private fun getSearchBarColor(requestedColor: Int, defaultColor: Int): Int =
         if (requestedColor == defaultColor) {
-            if (isDarkTheme) DrawableUtils.mixColor(0.25f, defaultColor, Color.WHITE) else Color.WHITE
+            if (isDarkTheme) DrawableUtils.mixColor(0.25f, defaultColor, Color.TRANSPARENT) else Color.TRANSPARENT
         } else {
-            DrawableUtils.mixColor(0.25f, requestedColor, Color.WHITE)
+            DrawableUtils.mixColor(0.25f, requestedColor, Color.TRANSPARENT)
         }
 
     override fun getUseDarkTheme(): Boolean = isDarkTheme

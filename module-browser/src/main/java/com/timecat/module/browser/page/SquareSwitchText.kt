@@ -41,6 +41,8 @@ class SquareSwitchText @JvmOverloads constructor(
             margin = 4
             layout_gravity = gravity_center
             isClickable = false
+        }.also {
+            addView(it)
         }
         nameView = TextView {
             layout_width = wrap_content
