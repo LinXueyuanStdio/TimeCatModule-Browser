@@ -43,7 +43,7 @@ import com.same.lib.helper.LayoutHelper
 import com.same.lib.util.*
 import com.timecat.component.commonsdk.utils.override.LogUtil
 import com.timecat.component.identity.Attr
-import com.timecat.layout.ui.layout.textStyle
+import com.timecat.layout.ui.layout.*
 import java.util.*
 import javax.inject.Inject
 
@@ -376,6 +376,13 @@ class TabsFrameLayout @JvmOverloads constructor(
             addView(searchContainer, 0, LayoutHelper.createLinear(0, LayoutHelper.MATCH_PARENT, 1.0f, 6, 0, 0, 0))
         }
         parentActionBar.addView(linear)
+        linear.apply{
+            (layoutParams as? ViewGroup.MarginLayoutParams)?.apply {
+                topMargin = Space.statusBarHeight
+                leftMargin = 48.dp
+                rightMargin = 0
+            }
+        }
         searchContainer.setVisibility(GONE)
 
         searchFieldCaption = TextView(context)

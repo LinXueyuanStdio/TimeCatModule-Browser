@@ -263,6 +263,12 @@
     <string name="dialog_delete_download">删除下载</string>
     <string name="dialog_delete_all_downloads">删除所有下载</string>
 
+    <!-- Tools dialog -->
+    <string name="dialog_tools_title">工具箱</string>
+    <string name="dialog_toggle_desktop">切换 desktop user agent</string>
+    <string name="dialog_adblock_enable_for_site">启用广告拦截</string>
+    <string name="dialog_adblock_disable_for_site">禁用广告拦截</string>
+
     <!-- Search Engines -->
     <string name="search_engine_custom">自定义网址</string>
     <string name="search_engine_google">Google</string>
