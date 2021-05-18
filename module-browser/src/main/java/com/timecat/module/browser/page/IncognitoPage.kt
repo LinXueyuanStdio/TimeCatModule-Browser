@@ -1,8 +1,6 @@
 package com.timecat.module.browser.page
 
-import acr.browser.lightning.IncognitoActivity
 import acr.browser.lightning.R
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -21,7 +19,6 @@ class IncognitoPage(
     intent: Intent? = null
 ) : AbsBrowserPage(intent) {
     override fun theme(): Int = R.style.ThemeDark
-    override fun menu(): Int = R.menu.incognito
 
     @Suppress("DEPRECATION")
     public override fun updateCookiePreference(): Completable = Completable.fromAction {
@@ -42,15 +39,5 @@ class IncognitoPage(
     override fun closeActivity() {
         closeDrawers(this::closeBrowser)
         finishFragment()
-    }
-
-    companion object {
-        /**
-         * Creates the intent with which to launch the activity. Adds the reorder to front flag.
-         */
-        fun createIntent(context: Context, uri: Uri? = null) = Intent(context, IncognitoActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-            data = uri
-        }
     }
 }

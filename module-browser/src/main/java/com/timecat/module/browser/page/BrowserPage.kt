@@ -27,8 +27,6 @@ class BrowserPage(
         cookieManager.setAcceptCookie(userPreferences.cookiesEnabled)
     }
 
-    override fun menu(): Int = R.menu.main
-
     override fun onPause() {
         super.onPause()
         saveOpenTabs()

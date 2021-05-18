@@ -104,6 +104,7 @@ import com.timecat.identity.data.block.BLOCK_APP_WebApp
 import com.timecat.identity.readonly.RouterHub
 import com.timecat.layout.ui.layout.*
 import com.timecat.module.browser.KeyEventView
+import com.timecat.module.browser.createBrowserIntent
 import com.timecat.module.browser.prepareShowInService
 import io.reactivex.Completable
 import io.reactivex.Scheduler
@@ -246,8 +247,6 @@ abstract class AbsBrowserPage(
 
     //region config
     open fun theme(): Int = R.style.ThemeLight
-
-    abstract fun menu(): Int
 
     /**
      * Determines if the current browser instance is in incognito mode or not.
@@ -1990,10 +1989,7 @@ abstract class AbsBrowserPage(
             LightningDialogBuilder.NewTab.BACKGROUND -> presenter?.newTab(urlInitializer, false)
             LightningDialogBuilder.NewTab.INCOGNITO -> {
                 drawer_layout.closeDrawers()
-                presentFragment(IncognitoPage(Intent().apply {
-                    flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-                    data = Uri.parse(url)
-                }))
+                presentFragment(IncognitoPage(createBrowserIntent(url)))
             }
         }
     }

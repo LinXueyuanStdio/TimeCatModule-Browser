@@ -18,10 +18,11 @@ import com.xiaojinzi.component.anno.ServiceAnno
 @ServiceAnno(BrowserPageService::class, name = [GLOBAL_BrowserPageServiceImpl])
 class BrowserPageServiceImpl : BrowserPageService {
     override fun openPage(context: Context, url: String, isIncognito: Boolean): BasePage {
-        if (isIncognito) {
-            return IncognitoPage()
+        val intent = createBrowserIntent(url)
+        return if (isIncognito) {
+            IncognitoPage(intent)
         } else {
-            return BrowserPage()
+            BrowserPage(intent)
         }
     }
 }
