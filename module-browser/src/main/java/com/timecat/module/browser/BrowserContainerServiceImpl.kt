@@ -11,10 +11,13 @@ import acr.browser.lightning.html.bookmark.BookmarkViewModel
 import acr.browser.lightning.log.NoOpLogger
 import android.content.Context
 import android.net.Uri
+import com.google.android.material.chip.Chip
+import com.timecat.component.router.app.NAV
+import com.timecat.data.room.record.RoomRecord
 import com.timecat.extend.arms.BaseApplication
 import com.timecat.identity.readonly.RouterHub
-import com.timecat.middle.block.service.ContainerService
-import com.timecat.middle.block.service.HomeService
+import com.timecat.layout.ui.layout.setShakelessClickListener
+import com.timecat.middle.block.service.*
 import com.xiaojinzi.component.anno.ServiceAnno
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -126,8 +129,20 @@ class BrowserContainerServiceImpl : ContainerService {
         callback.onVirtualLoadSuccess(listOf())
     }
 
-    override fun loadContainerButton(context: Context, parentUuid: String, homeService: HomeService, callback: ContainerService.LoadButton) {
-        callback.onLoadSuccess(listOf())
+    override fun loadContext(path: com.timecat.layout.ui.business.breadcrumb.Path, context: Context, parentUuid: String, record: RoomRecord?, homeService: HomeService) {
+        homeService.loadMenu(EmptyMenuContext())
+        homeService.loadHeader(listOf())
+        homeService.loadChipType(listOf())
+        homeService.loadPanel(EmptyPanelContext())
+        homeService.loadChipButtons(listOf(Chip(context).apply {
+            text = "浏览器"
+            setShakelessClickListener {
+                NAV.go(RouterHub.ARTIFACT_MainActivity)
+            }
+        }))
+        homeService.loadCommand(EmptyCommandContext())
+        homeService.loadInputSend(EmptyInputContext())
+        homeService.reloadData()
     }
 
     init {
