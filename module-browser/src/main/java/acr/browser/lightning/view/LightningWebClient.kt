@@ -131,7 +131,7 @@ class LightningWebClient(
             uiController.setForwardButtonEnabled(view.canGoForward())
             view.postInvalidate()
         }
-        if (view.title == null || view.title.isEmpty()) {
+        if (view.title == null || view.title!!.isEmpty()) {
             lightningView.titleInfo.setTitle(context.getString(R.string.untitled))
         } else {
             lightningView.titleInfo.setTitle(view.title)
@@ -228,13 +228,13 @@ class LightningWebClient(
             }
             positiveButton(R.string.action_yes) {
                 if (dontAskAgain.isChecked) {
-                    sslWarningPreferences.rememberBehaviorForDomain(webView.url, SslWarningPreferences.Behavior.PROCEED)
+                    sslWarningPreferences.rememberBehaviorForDomain(webView.url!!, SslWarningPreferences.Behavior.PROCEED)
                 }
                 handler.proceed()
             }
             negativeButton(R.string.action_no) {
                 if (dontAskAgain.isChecked) {
-                    sslWarningPreferences.rememberBehaviorForDomain(webView.url, SslWarningPreferences.Behavior.CANCEL)
+                    sslWarningPreferences.rememberBehaviorForDomain(webView.url!!, SslWarningPreferences.Behavior.CANCEL)
                 }
                 handler.cancel()
             }

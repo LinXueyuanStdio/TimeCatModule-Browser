@@ -18,7 +18,7 @@ android {
         }
     }
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        jvmTarget = "11"
     }
 }
 
@@ -28,7 +28,7 @@ jacoco {
 
 kapt {
     arguments {
-        arg("mezzanine.projectPath", project.rootDir.path + "\\module-browser")
+        arg("mezzanine.projectPath", project.rootDir.path + "/module-browser")
     }
 }
 

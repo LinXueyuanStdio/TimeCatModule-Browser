@@ -85,14 +85,14 @@ class LightningChromeClient(
 
 
     override fun onReceivedTitle(view: WebView?, title: String?) {
-        if (title != null && !title.isEmpty()) {
+        if (title != null && title.isNotEmpty()) {
             lightningView.titleInfo.setTitle(title)
         } else {
             lightningView.titleInfo.setTitle(context.getString(R.string.untitled))
         }
         uiController.tabChanged(lightningView)
         if (view != null && view.url != null) {
-            uiController.updateHistory(title, view.url)
+            uiController.updateHistory(title, view.url!!)
         }
     }
 

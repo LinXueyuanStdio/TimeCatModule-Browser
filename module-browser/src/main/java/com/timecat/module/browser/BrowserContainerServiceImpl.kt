@@ -16,6 +16,7 @@ import com.timecat.component.router.app.NAV
 import com.timecat.data.room.record.RoomRecord
 import com.timecat.extend.arms.BaseApplication
 import com.timecat.identity.readonly.RouterHub
+import com.timecat.layout.ui.business.breadcrumb.Path
 import com.timecat.layout.ui.layout.setShakelessClickListener
 import com.timecat.middle.block.service.*
 import com.xiaojinzi.component.anno.ServiceAnno
@@ -129,7 +130,7 @@ class BrowserContainerServiceImpl : ContainerService {
         callback.onVirtualLoadSuccess(listOf())
     }
 
-    override fun loadContext(path: com.timecat.layout.ui.business.breadcrumb.Path, context: Context, parentUuid: String, record: RoomRecord?, homeService: HomeService) {
+    override fun loadContext(path: Path, context: Context, parentUuid: String, record: RoomRecord?, homeService: HomeService) {
         homeService.loadMenu(EmptyMenuContext())
         homeService.loadHeader(listOf())
         homeService.loadChipType(listOf())
@@ -145,7 +146,13 @@ class BrowserContainerServiceImpl : ContainerService {
         homeService.reloadData()
     }
 
-    init {
-
+    override fun loadContextRecord(
+        path: Path,
+        context: Context,
+        parentUuid: String,
+        homeService: HomeService
+    ) {
+        homeService.loadContextRecord(null)
     }
+
 }
