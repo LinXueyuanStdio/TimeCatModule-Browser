@@ -20,6 +20,7 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    namespace 'acr.browser.lightning'
 }
 
 jacoco {

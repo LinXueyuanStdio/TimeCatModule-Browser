@@ -353,12 +353,10 @@ class LightningView(
 
             if (!isIncognito) {
                 domStorageEnabled = true
-                setAppCacheEnabled(true)
                 cacheMode = WebSettings.LOAD_DEFAULT
                 databaseEnabled = true
             } else {
                 domStorageEnabled = false
-                setAppCacheEnabled(false)
                 databaseEnabled = false
                 cacheMode = WebSettings.LOAD_NO_CACHE
             }
@@ -371,12 +369,12 @@ class LightningView(
             allowFileAccessFromFileURLs = false
             allowUniversalAccessFromFileURLs = false
 
-            getPathObservable("appcache")
-                .subscribeOn(databaseScheduler)
-                .observeOn(mainScheduler)
-                .subscribe { file ->
-                    setAppCachePath(file.path)
-                }
+//            getPathObservable("appcache")
+//                .subscribeOn(databaseScheduler)
+//                .observeOn(mainScheduler)
+//                .subscribe { file ->
+//                    setAppCachePath(file.path)
+//                }
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
                 getPathObservable("geolocation")
