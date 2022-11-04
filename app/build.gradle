@@ -2,7 +2,7 @@ apply from: "${gradle.ext.localGradleDir}/project/fake.gradle"
 
 android {
     ndkVersion "21.3.6528147"
-    buildFeatures{
+    buildFeatures {
         dataBinding = true
         // viewBinding = true
     }
